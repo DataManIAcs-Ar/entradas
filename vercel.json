@@ -1,7 +1,4 @@
 {
-  "crons": [
-    { "path": "/api/expire-orders", "schedule": "* * * * *" }
-  ],
   "headers": [
     {
       "source": "/assets/(.*)",
