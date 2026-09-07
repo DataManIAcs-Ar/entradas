@@ -223,12 +223,11 @@ comment on view venue_settlement is
 --  Control: 1.260.000 = 70.182 + 61.818 + 1.128.000 ✓
 --
 --
---  PENDIENTE CON MERCADO PAGO:
---  Falta confirmar si `marketplace_fee` se calcula sobre el bruto o
---  sobre el neto después del arancel. Acá lo mandamos como MONTO
---  ABSOLUTO (platform_fee_cents), que esquiva la pregunta siempre y
---  cuando MP lo descuente después del suyo. Si resulta que lo calcula
---  distinto, se ajusta una sola línea de esta función.
+--  MERCADO PAGO — CONFIRMADO:
+--  `marketplace_fee` se calcula sobre el MONTO BRUTO, antes del
+--  arancel. Lo mandamos igual como monto absoluto
+--  (platform_fee_cents), que es equivalente y no depende de la
+--  interpretación. No repreguntar.
 --
 --  PENDIENTE EN EL CÓDIGO:
 --  · create-order.js debe usar la firma nueva: pasa el SUBTOTAL y
