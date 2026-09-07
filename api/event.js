@@ -18,6 +18,14 @@
 
 const { query } = require('../lib/db');
 
+// lib/db.js devuelve las filas directamente, no el objeto de node-postgres.
+// Esta función acepta las dos formas para que un cambio ahí no rompa acá.
+function filas(r) {
+  if (!r) return [];
+  return Array.isArray(r) ? r : (r.rows || []);
+}
+
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'method' });
 
@@ -31,7 +39,7 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'faltan venue y event' });
     }
 
-    const ev = (await query(
+    const ev = filas(await query(
       `select
          e.id, e.slug, e.name, e.tagline, e.description,
          e.starts_at, e.doors_at, e.ends_at,
@@ -50,7 +58,7 @@ module.exports = async function handler(req, res) {
        join venue v on v.id = e.venue_id
       where v.slug = $1 and e.slug = $2 and v.status = 'active'`,
       [venueSlug, eventSlug]
-    )).rows[0];
+    ))[0];
 
     if (!ev) return res.status(404).json({ error: 'evento inexistente' });
 
@@ -60,7 +68,7 @@ module.exports = async function handler(req, res) {
       return res.status(404).json({ error: 'evento inexistente' });
     }
 
-    const { rows: tiers } = await query(
+    const tiers = filas(await query(
       `select
          a.ticket_type_id  as id,
          a.name,
@@ -79,7 +87,7 @@ module.exports = async function handler(req, res) {
         and (tt.visible or tt.id = $2::uuid)
       order by tt.sort_order, tt.name`,
       [ev.id, hiddenTier]
-    );
+    ));
 
     const now = new Date();
 
