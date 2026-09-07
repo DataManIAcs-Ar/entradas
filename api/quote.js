@@ -20,6 +20,14 @@
 
 const { query } = require('../lib/db');
 
+// lib/db.js devuelve las filas directamente, no el objeto de node-postgres.
+// Esta función acepta las dos formas para que un cambio ahí no rompa acá.
+function filas(r) {
+  if (!r) return [];
+  return Array.isArray(r) ? r : (r.rows || []);
+}
+
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' });
 
@@ -45,12 +53,12 @@ module.exports = async function handler(req, res) {
 
       // El tier tiene que ser DE ESTE evento. Sin esta condición se
       // podría cotizar el precio de un evento con el id de otro.
-      const tt = (await query(
+      const tt = filas(await query(
         `select id, name, price_cents, max_per_order
            from ticket_type
           where id = $1::uuid and event_id = $2::uuid and status = 'active'`,
         [it.ticket_type_id, event_id]
-      )).rows[0];
+      ))[0];
 
       if (!tt) return res.status(404).json({ error: 'tipo de entrada inexistente' });
       if (qty > tt.max_per_order) {
@@ -67,9 +75,9 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const f = (await query(
+    const f = filas(await query(
       `select * from calc_fees($1::bigint, $2::uuid)`, [subtotal, event_id]
-    )).rows[0];
+    ))[0];
 
     if (!f) return res.status(404).json({ error: 'evento inexistente' });
 
