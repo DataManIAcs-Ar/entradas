@@ -59,7 +59,11 @@ declare
   f          record;      -- resultado de calc_fees
   v_hold     timestamptz;
   v_paid     timestamptz;
-  n_code     int := 0;
+  -- Los códigos salen de la MISMA secuencia que usa confirm_order().
+  -- Un contador local acá arrancaría en ARC-0001 y chocaría con las
+  -- entradas reales ya emitidas: ticket.code es UNIQUE global y el
+  -- bloque entero aborta.
+  v_seq      bigint;
   i          int;
   r          numeric;
 begin
@@ -138,7 +142,7 @@ begin
       -- Las entradas se emiten SOLO si la orden está paga.
       if v_status = 'paid' then
         for i in 1..v_qty loop
-          n_code  := n_code + 1;
+          v_seq    := nextval('ticket_code_seq');
           v_ticket := gen_random_uuid();
 
           insert into ticket (
@@ -146,7 +150,7 @@ begin
           ) values (
             v_ticket, v_order, c_event, t.id,
             -- código corto único por construcción, no por suerte
-            'ARC-' || lpad(upper(to_hex(n_code)), 4, '0'),
+            'ARC-' || lpad(upper(to_hex(v_seq)), 4, '0'),
             -- formato real: <id>.<hmac> — el escáner parte, recalcula
             -- el HMAC con el secreto y valida OFFLINE, sin consultar
             -- la base.
