@@ -15,13 +15,21 @@
 
 const { query } = require('../lib/db');
 
+// lib/db.js devuelve las filas directamente, no el objeto de node-postgres.
+// Esta función acepta las dos formas para que un cambio ahí no rompa acá.
+function filas(r) {
+  if (!r) return [];
+  return Array.isArray(r) ? r : (r.rows || []);
+}
+
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'method' });
 
   try {
     const venue = (req.query && req.query.venue) || null;
 
-    const { rows } = await query(
+    const rows = filas(await query(
       `select
          v.slug                                as venue_slug,
          v.name                                as venue_name,
@@ -64,7 +72,7 @@ module.exports = async function handler(req, res) {
                e.id, e.slug, e.name, e.tagline, e.starts_at, e.doors_at, e.image_urls
       order by e.starts_at`,
       [venue]
-    );
+    ));
 
     const eventos = rows.map((r) => ({
       id:          r.id,
