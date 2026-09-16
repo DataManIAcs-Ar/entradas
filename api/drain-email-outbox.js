@@ -1,4 +1,3 @@
-// v2
 const { query } = require('../lib/db.js');
 const { Resend } = require('resend');
 
