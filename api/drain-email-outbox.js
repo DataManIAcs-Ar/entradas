@@ -1,27 +1,30 @@
-import { Resend } from 'resend';
-import { query } from '../lib/db.js';
+const { query } = require('../lib/db.js');
+const { Resend } = require('resend');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default async function handler(req, res) {
-  // Only allow GET (for cron) or POST (for manual trigger)
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'method not allowed' });
   }
 
-  // Fetch up to 10 pending emails
-  const { rows: pending } = await query(`
-    SELECT eo.id, eo.order_id, eo.to_email, eo.template,
-           o.buyer_first_name, o.buyer_last_name, o.code,
-           e.name as event_name, e.starts_at
-    FROM email_outbox eo
-    JOIN "order" o ON o.id = eo.order_id
-    JOIN event e   ON e.id = o.event_id
-    WHERE eo.status = 'pending'
-      AND eo.attempts < 3
-    ORDER BY eo.created_at
-    LIMIT 10
-  `);
+  let pending;
+  try {
+    pending = await query(`
+      SELECT eo.id, eo.order_id, eo.to_email, eo.template,
+             o.buyer_first_name, o.buyer_last_name, o.code,
+             e.name as event_name, e.starts_at
+      FROM email_outbox eo
+      JOIN "order" o ON o.id = eo.order_id
+      JOIN event e   ON e.id = o.event_id
+      WHERE eo.status = 'pending'
+        AND eo.attempts < 3
+      ORDER BY eo.created_at
+      LIMIT 10
+    `);
+  } catch (err) {
+    return res.status(500).json({ error: 'db error', detail: err.message });
+  }
 
   if (pending.length === 0) {
     return res.status(200).json({ sent: 0, message: 'nothing pending' });
@@ -64,11 +67,4 @@ export default async function handler(req, res) {
             last_error = $2,
             status = CASE WHEN attempts + 1 >= 3 THEN 'failed' ELSE 'pending' END
         WHERE id = $1
-      `, [row.id, err.message]);
-
-      results.push({ id: row.id, to: row.to_email, ok: false, error: err.message });
-    }
-  }
-
-  return res.status(200).json({ sent: results.filter(r => r.ok).length, results });
-}
+      `, [row.id,
