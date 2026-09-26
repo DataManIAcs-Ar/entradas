@@ -42,4 +42,37 @@ module.exports = async function handler(req, res) {
         html: `
           <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
             <h2>¡Hola ${row.buyer_first_name}!</h2>
-            <p>Tu entrada para
+            <p>Tu entrada para <strong>${row.event_name}</strong> está confirmada.</p>
+            <p style="font-size:24px;font-weight:bold;letter-spacing:4px">${row.code}</p>
+            <p>Guardá este código — te lo van a pedir en la puerta.</p>
+            <hr>
+            <p style="color:#999;font-size:12px">DataManIAcs · entradas.datamaniacs.com.ar</p>
+          </div>
+        `,
+      });
+
+      if (error) throw new Error(JSON.stringify(error));
+
+      await query(`
+        UPDATE email_outbox
+        SET status = 'sent', sent_at = now(), attempts = attempts + 1
+        WHERE id = $1
+      `, [row.id]);
+
+      results.push({ id: row.id, to: row.to_email, ok: true });
+
+    } catch (err) {
+      await query(`
+        UPDATE email_outbox
+        SET attempts = attempts + 1,
+            last_error = $2,
+            status = CASE WHEN attempts + 1 >= 3 THEN 'failed' ELSE 'pending' END
+        WHERE id = $1
+      `, [row.id, err.message]);
+
+      results.push({ id: row.id, to: row.to_email, ok: false, error: err.message });
+    }
+  }
+
+  return res.status(200).json({ sent: results.filter(r => r.ok).length, results });
+};
