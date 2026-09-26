@@ -1,9 +1,10 @@
+// v3
 const { query } = require('../lib/db.js');
 const { Resend } = require('resend');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'method not allowed' });
   }
@@ -23,10 +24,10 @@ export default async function handler(req, res) {
       LIMIT 10
     `);
   } catch (err) {
-    return res.status(500).json({ error: 'db error', detail: err.message });
+    return res.status(500).json({ error: 'db_error', detail: err.message });
   }
 
-  if (pending.length === 0) {
+  if (!pending || pending.length === 0) {
     return res.status(200).json({ sent: 0, message: 'nothing pending' });
   }
 
@@ -67,4 +68,11 @@ export default async function handler(req, res) {
             last_error = $2,
             status = CASE WHEN attempts + 1 >= 3 THEN 'failed' ELSE 'pending' END
         WHERE id = $1
-      `, [row.id,
+      `, [row.id, err.message]);
+
+      results.push({ id: row.id, to: row.to_email, ok: false, error: err.message });
+    }
+  }
+
+  return res.status(200).json({ sent: results.filter(r => r.ok).length, results });
+};
