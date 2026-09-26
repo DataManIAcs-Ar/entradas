@@ -1,4 +1,4 @@
-// v4 - debu
+// v4 - debug
 const { Pool } = require('pg');
 
 const pool = new Pool({
