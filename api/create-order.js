@@ -181,7 +181,7 @@ module.exports = async function handler(req, res) {
     // tomado durante toda la latencia de red. Con cientos de personas
     // comprando a la vez, eso es una fila de espera.
     const pref = await createPreference({
-      accessToken: result.event.mp_access_token,
+      accessToken: result.event.mp_access_token || process.env.MP_ACCESS_TOKEN,
       order:   o,
       event:   result.event,
       venue:   { slug: result.event.venue_slug },
