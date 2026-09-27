@@ -52,8 +52,9 @@ module.exports = async function handler(req, res) {
 
       if (!ev)                     throw httpErr(404, 'evento inexistente');
       if (ev.status !== 'on_sale') throw httpErr(409, 'evento no está a la venta');
-      if (method === 'mp_checkout' && !ev.mp_access_token) {
-        throw httpErr(409, 'el venue no vinculó Mercado Pago');
+      const accessToken = ev.mp_access_token || process.env.MP_ACCESS_TOKEN;
+      if (method === 'mp_checkout' && !accessToken) {
+      throw httpErr(409, 'el venue no vinculó Mercado Pago');
       }
 
       let subtotal = 0;
