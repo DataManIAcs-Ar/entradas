@@ -105,7 +105,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
 .btn-secondary{width:100%;margin-top:10px;padding:12px;background:transparent;border:1px solid var(--border2);border-radius:var(--r);color:var(--muted);font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all 0.15s}
 .btn-secondary:hover{background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,0.4);color:var(--gold2)}
 
-/* PAYMENT STEP */
+/* PAYMENT */
 .pay-summary{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);padding:18px;margin-bottom:14px}
 .pay-summary-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px}
 .pay-name{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;margin-bottom:3px}
@@ -149,7 +149,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
   <p id="overlay-msg">Procesando…</p>
 </div>
 
-<!-- CATALOG VIEW -->
+<!-- CATALOG -->
 <div id="view-catalog">
   <header class="cat-header">
     <div class="venue-eyebrow" style="margin-bottom:16px">
@@ -200,7 +200,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
     <p class="so-body">Las entradas de preventa ya fueron reservadas.<br>Habrá entradas en puerta el día del evento.</p>
   </div>
 
-  <!-- STEP 1: DATOS -->
+  <!-- STEP 1 -->
   <div class="step active" id="step1">
     <div class="step-title">Tus datos</div>
     <p class="step-sub">Completá el formulario y te mostramos cómo pagar.</p>
@@ -264,7 +264,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
     <button class="btn-primary" onclick="goStep2()">Continuar →</button>
   </div>
 
-  <!-- STEP 2: PAGO -->
+  <!-- STEP 2 -->
   <div class="step" id="step2">
     <div class="step-title">Resumen y pago</div>
     <p class="step-sub">Revisá los datos antes de pagar.</p>
@@ -296,7 +296,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
     <button class="btn-secondary" onclick="goStep1()">← Volver</button>
   </div>
 
-  <!-- STEP 3: GRACIAS -->
+  <!-- STEP 3 -->
   <div class="step" id="step3">
     <div class="thanks-wrap">
       <div class="thanks-ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
@@ -326,7 +326,7 @@ async function loadCatalog() {
   try {
     const r = await fetch(BASE + '/api/events');
     const data = await r.json();
-    renderCatalog(data.events || []);
+    renderCatalog(data.eventos || []);
   } catch(e) {
     document.getElementById('events-grid').innerHTML =
       '<div style="text-align:center;color:var(--danger);padding:40px;grid-column:1/-1">Error cargando eventos. Recargá la página.</div>';
@@ -341,22 +341,23 @@ function renderCatalog(events) {
   }
 
   grid.innerHTML = events.map(ev => {
-    const imgs = ev.image_urls || [];
-    const imgA = imgs[0] || '';
-    const imgB = imgs[1] || imgA;
-    const price = ev.price_cents / 100;
-    const avail = ev.available;
-    const soldOut = avail !== null && avail <= 0;
+    const imgs    = ev.image_urls || [];
+    const imgA    = imgs[0] || '';
+    const imgB    = imgs[1] || imgA;
+    const price   = ev.desde_cents / 100;
+    const soldOut = ev.agotado;
+    const avail   = ev.available;
 
     return `
-      <div class="ev-card" onclick="${soldOut ? '' : 'selectEvent(' + JSON.stringify(JSON.stringify(ev)) + ')'}">
+      <div class="ev-card" onclick="${soldOut ? '' : 'selectEvent(\'' + encodeURIComponent(JSON.stringify(ev)) + '\')'}">
         <div class="ev-card-img">
           <div class="ev-card-img-half" style="background-image:url('${imgA}')"></div>
           <div class="ev-card-img-half" style="background-image:url('${imgB}')"></div>
         </div>
         <div class="ev-card-body">
-          <div class="ev-venue">${ev.venue_name} · ${ev.city}</div>
+          <div class="ev-venue">${ev.venue.name} · ${ev.venue.city}</div>
           <div class="ev-name">${ev.name}</div>
+          ${ev.tagline ? '<div class="ev-tagline">' + ev.tagline + '</div>' : ''}
           <div class="ev-date">${formatDate(ev.starts_at)}</div>
           <div class="ev-price">${ars(price)} <span style="font-size:13px;color:var(--muted);font-family:'Inter',sans-serif;font-weight:400">preventa</span></div>
           <div class="ev-avail">${soldOut ? '🔴 Agotado' : avail !== null ? avail + ' lugares disponibles' : ''}</div>
@@ -370,29 +371,29 @@ function renderCatalog(events) {
 function formatDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
-  const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const dias   = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const meses  = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   return dias[d.getDay()] + ' ' + d.getDate() + ' de ' + meses[d.getMonth()] + ' · ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + 'hs';
 }
 
-function selectEvent(evJson) {
-  const ev = JSON.parse(evJson);
+function selectEvent(encoded) {
+  const ev = JSON.parse(decodeURIComponent(encoded));
   currentEvent = ev;
   CFG = {
     event_id:       ev.id,
     ticket_type_id: ev.ticket_type_id,
     tier_name:      ev.tier_name,
-    price_cents:    ev.price_cents,
+    price_cents:    ev.desde_cents,
     max_per_order:  ev.max_per_order || 10,
     available:      ev.available,
   };
 
-  document.getElementById('hVenueName').textContent  = ev.venue_name;
+  document.getElementById('hVenueName').textContent  = ev.venue.name;
   document.getElementById('hEventName').innerHTML    = '<em>' + ev.name + '</em>';
   document.getElementById('hEventDate').textContent  = formatDate(ev.starts_at);
-  document.getElementById('tierName').textContent    = ev.tier_name;
+  document.getElementById('tierName').textContent    = ev.tier_name || 'Entrada general';
 
-  qty = 1;
+  qty       = 1;
   available = ev.available !== null ? ev.available : 9999;
 
   document.getElementById('view-catalog').style.display = 'none';
@@ -421,11 +422,11 @@ function showCatalog() {
 function updateCounter() {
   const maxBuy = Math.min(available, CFG.max_per_order || 10);
   if (qty > maxBuy) qty = maxBuy;
-  document.getElementById('qtyNum').textContent      = qty;
+  document.getElementById('qtyNum').textContent       = qty;
   document.getElementById('unitPriceText').textContent = ars(CFG.price_cents / 100) + ' por persona';
-  document.getElementById('totalVal').textContent    = ars(qty * CFG.price_cents / 100);
-  document.getElementById('btnMinus').disabled       = qty <= 1;
-  document.getElementById('btnPlus').disabled        = qty >= maxBuy;
+  document.getElementById('totalVal').textContent     = ars(qty * CFG.price_cents / 100);
+  document.getElementById('btnMinus').disabled        = qty <= 1;
+  document.getElementById('btnPlus').disabled         = qty >= maxBuy;
 }
 
 function changeQty(d) {
@@ -436,7 +437,7 @@ function changeQty(d) {
 
 // ── VALIDATION ────────────────────────────────────────────────
 function telFeedback() {
-  const v = document.getElementById('f-tel').value;
+  const v  = document.getElementById('f-tel').value;
   const fb = document.getElementById('tel-feedback');
   if (!v.length) { fb.textContent=''; return; }
   if (v.length < 10) { fb.style.color='var(--danger)'; fb.textContent=v.length+'/10 dígitos'; }
@@ -444,7 +445,7 @@ function telFeedback() {
 }
 
 function dniFeedback() {
-  const v = document.getElementById('f-dni').value;
+  const v  = document.getElementById('f-dni').value;
   const fb = document.getElementById('dni-feedback');
   if (!v.length) { fb.textContent=''; return; }
   if (v.length < 7) { fb.style.color='var(--danger)'; fb.textContent=v.length+'/7 dígitos mínimo'; }
@@ -496,9 +497,9 @@ function goStep2() {
   const servicio = Math.round(subtotal * 0.05);
   const total    = subtotal + servicio;
 
-  document.getElementById('s-nombre').textContent  = document.getElementById('f-nombre').value.trim() + ' ' + document.getElementById('f-apellido').value.trim();
-  document.getElementById('s-detalle').textContent = qty + ' entrada' + (qty>1?'s':'') + ' preventa · DNI ' + document.getElementById('f-dni').value;
-  document.getElementById('s-total').textContent   = ars(total);
+  document.getElementById('s-nombre').textContent   = document.getElementById('f-nombre').value.trim() + ' ' + document.getElementById('f-apellido').value.trim();
+  document.getElementById('s-detalle').textContent  = qty + ' entrada' + (qty>1?'s':'') + ' preventa · DNI ' + document.getElementById('f-dni').value;
+  document.getElementById('s-total').textContent    = ars(total);
   document.getElementById('ds-entradas').textContent = ars(subtotal);
   document.getElementById('ds-servicio').textContent = ars(servicio);
   document.getElementById('ds-total').textContent    = ars(total);
@@ -517,11 +518,11 @@ async function pagar() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        event_id: CFG.event_id,
+        event_id:       CFG.event_id,
         payment_method: 'mp_checkout',
         items: [{
           ticket_type_id: CFG.ticket_type_id,
-          quantity: qty,
+          quantity:       qty,
         }],
         buyer: {
           first_name: document.getElementById('f-nombre').value.trim(),
@@ -543,7 +544,6 @@ async function pagar() {
     }
 
     if (data.init_point) {
-      // Redirect to MP checkout
       window.location.href = data.init_point;
     }
 
@@ -554,14 +554,14 @@ async function pagar() {
   }
 }
 
-// ── GRACIAS (return from MP) ───────────────────────────────────
+// ── GRACIAS ───────────────────────────────────────────────────
 function checkReturn() {
   const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
+  const code   = params.get('code');
   if (code) {
     document.getElementById('view-catalog').style.display = 'none';
     document.getElementById('view-event').style.display   = 'block';
-    document.getElementById('thanksCode').textContent = code;
+    document.getElementById('thanksCode').textContent     = code;
     document.getElementById('progressDots').style.display = 'none';
     ['step1','step2'].forEach(id => document.getElementById(id).classList.remove('active'));
     document.getElementById('step3').classList.add('active');
