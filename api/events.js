@@ -30,7 +30,7 @@ module.exports = async function handler(req, res) {
 
          (array_agg(tt.id order by tt.sort_order, tt.name))[1] as ticket_type_id,
          (array_agg(tt.name order by tt.sort_order, tt.name))[1] as tier_name,
-         min(tt.max_per_order)                 as max_per_order,
+         (array_agg(tt.max_per_order order by tt.sort_order, tt.name))[1] as max_per_order,
          min(a.price_cents)                    as desde_cents,
 
          bool_or(tt.quantity is null)          as cupo_ilimitado,
