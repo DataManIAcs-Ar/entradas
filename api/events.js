@@ -28,8 +28,8 @@ module.exports = async function handler(req, res) {
          e.doors_at,
          coalesce(e.image_urls, '{}')          as image_urls,
 
-         min(tt.id)                            as ticket_type_id,
-         min(tt.name)                          as tier_name,
+         (array_agg(tt.id order by tt.sort_order, tt.name))[1] as ticket_type_id,
+         (array_agg(tt.name order by tt.sort_order, tt.name))[1] as tier_name,
          min(tt.max_per_order)                 as max_per_order,
          min(a.price_cents)                    as desde_cents,
 
