@@ -1,27 +1,10 @@
 // api/events.js
-//
-// La grilla pública: qué hay a la venta, en todos los venues.
-//
-// POR QUÉ ESTO EXISTE Y NO SE LEE SUPABASE DIRECTO:
-// RLS está activo y sin políticas, así que la clave `anon` no lee
-// nada — que es exactamente lo que queremos, porque la tabla venue
-// tiene los access tokens de Mercado Pago adentro. El frontend habla
-// con estos endpoints y nunca con la base.
-//
-// QUÉ SALE Y QUÉ NO:
-// Solo eventos `on_sale`, futuros, de venues `active`. Solo tiers
-// `visible` — la lista de invitados no aparece acá, se entra por link
-// directo (ver api/event.js).
-
 const { query } = require('../lib/db');
 
-// lib/db.js devuelve las filas directamente, no el objeto de node-postgres.
-// Esta función acepta las dos formas para que un cambio ahí no rompa acá.
 function filas(r) {
   if (!r) return [];
   return Array.isArray(r) ? r : (r.rows || []);
 }
-
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'method' });
@@ -45,10 +28,11 @@ module.exports = async function handler(req, res) {
          e.doors_at,
          coalesce(e.image_urls, '{}')          as image_urls,
 
+         min(tt.id)                            as ticket_type_id,
+         min(tt.name)                          as tier_name,
+         min(tt.max_per_order)                 as max_per_order,
          min(a.price_cents)                    as desde_cents,
 
-         -- Un tier sin tope propio hace que el evento no pueda
-         -- agotarse por conteo.
          bool_or(tt.quantity is null)          as cupo_ilimitado,
          coalesce(sum(a.available), 0)::int    as disponibles
 
@@ -75,17 +59,21 @@ module.exports = async function handler(req, res) {
     ));
 
     const eventos = rows.map((r) => ({
-      id:          r.id,
-      slug:        r.slug,
-      url:         '/' + r.venue_slug + '/' + r.slug,
-      name:        r.name,
-      tagline:     r.tagline,
-      starts_at:   r.starts_at,
-      doors_at:    r.doors_at,
-      image_urls:  r.image_urls,
-      desde_cents: Number(r.desde_cents),
-      // `agotado` solo tiene sentido si TODOS los tiers tienen tope.
-      agotado:     r.cupo_ilimitado ? false : r.disponibles <= 0,
+      id:             r.id,
+      slug:           r.slug,
+      url:            '/' + r.venue_slug + '/' + r.slug,
+      name:           r.name,
+      tagline:        r.tagline,
+      starts_at:      r.starts_at,
+      doors_at:       r.doors_at,
+      image_urls:     r.image_urls,
+      ticket_type_id: r.ticket_type_id,
+      tier_name:      r.tier_name,
+      max_per_order:  Number(r.max_per_order),
+      desde_cents:    Number(r.desde_cents),
+      price_cents:    Number(r.desde_cents),
+      available:      r.cupo_ilimitado ? null : Number(r.disponibles),
+      agotado:        r.cupo_ilimitado ? false : r.disponibles <= 0,
       venue: {
         slug:     r.venue_slug,
         name:     r.venue_name,
@@ -95,9 +83,6 @@ module.exports = async function handler(req, res) {
       },
     }));
 
-    // 60 segundos en el CDN. La grilla no cambia por segundo y esto
-    // evita que una noche de venta fuerte pegue a la base en cada
-    // recarga. El cupo exacto se chequea igual al crear la orden.
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     return res.status(200).json({ eventos: eventos });
 
