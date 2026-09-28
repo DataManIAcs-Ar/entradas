@@ -7,309 +7,601 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+/* ── TOKENS ─────────────────────────────────────────────── */
 :root{
-  --bg:#0e0d0b;--surface:#171510;--surface2:#1e1b16;
-  --border:rgba(201,168,76,0.14);--border2:rgba(255,255,255,0.07);
-  --ink:#f2ead8;--ink2:#c4b89a;--muted:#6b6150;
-  --gold:#c9a84c;--gold2:#e8c97a;--gold-dim:rgba(201,168,76,0.1);
-  --danger:#c05a4a;--green:#3ec97c;
-  --r:12px;--rlg:18px;
+  --bg:#0e0d0b; --surface:#171510; --surface2:#1e1b16; --surface3:#252118;
+  --border:rgba(201,168,76,0.14); --border2:rgba(255,255,255,0.07);
+  --ink:#f2ead8; --ink2:#c4b89a; --muted:#6b6150;
+  --gold:#c9a84c; --gold2:#e8c97a; --gold-dim:rgba(201,168,76,0.10);
+  --danger:#c05a4a; --green:#3ec97c;
+  --r:10px; --rlg:16px; --rxl:22px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-height:100vh;padding-bottom:80px}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
 
-/* CATALOG */
-.cat-header{padding:40px 24px 32px;text-align:center;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
-.cat-header::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(201,168,76,.06),transparent);pointer-events:none}
-.venue-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.venue-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0.4}
-.venue-name{font-size:10px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
-.cat-title{font-family:'Playfair Display',serif;font-size:clamp(26px,7vw,48px);font-weight:700;color:var(--ink);margin:0 0 14px;font-style:italic}
-.cat-tagline{font-size:13.5px;color:var(--muted);font-style:italic;line-height:1.5;margin:0 auto 24px;max-width:440px}
-.powered{display:inline-flex;align-items:center;gap:8px;opacity:.65}
-.powered span{font-size:9px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#6b6150}
-.events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px;max-width:780px;margin:0 auto;padding:28px 20px 60px}
-.ev-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--rlg);overflow:hidden;transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;cursor:pointer}
-.ev-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.5)}
-.ev-card-img{height:210px;overflow:hidden;flex-shrink:0;display:flex}
-.ev-card-img-half{flex:1;background-size:cover;background-position:center}
-.ev-card-body{padding:18px 20px 20px;display:flex;flex-direction:column;flex:1}
-.ev-venue{font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-.ev-name{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:var(--ink);margin:0 0 6px;line-height:1.25}
-.ev-tagline{font-size:12.5px;color:var(--muted);font-style:italic;line-height:1.45;margin:0 0 10px}
-.ev-date{font-size:12px;color:var(--ink2);margin:0 0 12px;display:flex;align-items:center;gap:6px}
+/* ── NAV ────────────────────────────────────────────────── */
+.nav{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 20px;
+  background:linear-gradient(180deg,rgba(14,13,11,.97) 80%,transparent);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(201,168,76,0.08);
+}
+.nav-brand{
+  font-family:'Playfair Display',serif;
+  font-size:18px;font-weight:700;font-style:italic;
+  color:var(--gold);letter-spacing:-0.01em;
+}
+.nav-brand span{color:var(--ink2);font-style:normal;font-size:11px;font-family:'Inter',sans-serif;font-weight:400;margin-left:6px;letter-spacing:0.08em;text-transform:uppercase}
+.nav-city{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.nav-city::before{content:'📍';font-size:10px}
+
+/* ── CATALOG ────────────────────────────────────────────── */
+#view-catalog{min-height:100vh}
+
+/* hero featured card */
+.hero-feature{
+  position:relative;height:clamp(320px,52vw,520px);overflow:hidden;
+}
+.hero-feature-bg{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center top;
+  filter:brightness(0.45);
+  transition:transform 6s ease;
+}
+.hero-feature:hover .hero-feature-bg{transform:scale(1.03)}
+.hero-feature-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(0deg, var(--bg) 0%, rgba(14,13,11,0.55) 55%, transparent 100%);
+}
+.hero-feature-content{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:clamp(20px,5vw,44px);
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--gold);background:rgba(201,168,76,0.15);
+  border:1px solid rgba(201,168,76,0.35);border-radius:999px;
+  padding:3px 10px;margin-bottom:12px;
+}
+.hero-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(26px,5.5vw,56px);
+  font-weight:700;line-height:1.05;
+  color:var(--ink);margin-bottom:8px;
+  max-width:640px;
+  text-shadow:0 2px 20px rgba(0,0,0,.5);
+}
+.hero-title em{color:var(--gold2);font-style:italic}
+.hero-meta{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  margin-bottom:18px;
+}
+.hero-meta-item{font-size:13px;color:var(--ink2);display:flex;align-items:center;gap:5px}
+.hero-meta-item svg{opacity:0.6}
+.hero-price-tag{
+  display:inline-flex;flex-direction:column;
+  background:rgba(14,13,11,0.7);border:1px solid var(--border);
+  border-radius:var(--r);padding:8px 14px;backdrop-filter:blur(6px);
+}
+.hero-price-label{font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:1px}
+.hero-price-val{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--gold2);line-height:1}
+.hero-price-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.hero-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hero-cta{
+  padding:13px 26px;border-radius:var(--r);border:none;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#0e0d0b;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .18s;white-space:nowrap;
+}
+.hero-cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.hero-cta-ghost{
+  padding:13px 20px;border-radius:var(--r);
+  border:1px solid rgba(201,168,76,0.35);background:transparent;
+  color:var(--gold2);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;
+  cursor:pointer;transition:all .18s;white-space:nowrap;
+  backdrop-filter:blur(4px);
+}
+.hero-cta-ghost:hover{background:rgba(201,168,76,0.1)}
+
+/* filter bar */
+.filter-wrap{
+  position:sticky;top:53px;z-index:40;
+  background:linear-gradient(180deg,rgba(14,13,11,0.96) 85%,transparent);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.filter-scroll{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 20px;
+  overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+.filter-scroll::-webkit-scrollbar{display:none}
+.filter-pill{
+  flex-shrink:0;padding:7px 16px;border-radius:999px;
+  border:1px solid var(--border2);background:var(--surface);
+  color:var(--muted);font-size:12px;font-weight:500;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+}
+.filter-pill:hover{border-color:rgba(201,168,76,0.35);color:var(--ink2)}
+.filter-pill.active{
+  background:var(--gold-dim);border-color:var(--gold);color:var(--gold2);font-weight:600;
+}
+
+/* section label */
+.section-head{padding:24px 20px 12px;display:flex;align-items:baseline;gap:10px}
+.section-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--ink)}
+.section-count{font-size:12px;color:var(--muted);font-style:italic}
+
+/* events grid */
+.events-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:16px;
+  padding:0 20px 100px;
+}
+
+/* event card — Netflix style */
+.ev-card{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:var(--rlg);
+  overflow:hidden;
+  cursor:pointer;
+  transition:transform .2s, box-shadow .2s, border-color .2s;
+  display:flex;flex-direction:column;
+  position:relative;
+}
+.ev-card:hover{
+  transform:translateY(-4px) scale(1.01);
+  box-shadow:0 16px 40px rgba(0,0,0,.6),0 0 0 1px rgba(201,168,76,0.2);
+  border-color:rgba(201,168,76,0.22);
+}
+.ev-card-img{
+  height:190px;overflow:hidden;flex-shrink:0;
+  display:flex;position:relative;
+}
+.ev-card-img-half{
+  flex:1;background-size:cover;background-position:center;
+  transition:transform .4s ease;
+}
+.ev-card:hover .ev-card-img-half{transform:scale(1.04)}
+.ev-card-img-divider{width:1px;background:rgba(0,0,0,0.5);flex-shrink:0;z-index:1}
+.ev-card-img-fade{
+  position:absolute;bottom:0;left:0;right:0;height:60px;
+  background:linear-gradient(transparent,var(--surface));
+  pointer-events:none;
+}
+/* availability ribbon */
+.ev-ribbon{
+  position:absolute;top:10px;right:10px;
+  font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  padding:3px 9px;border-radius:999px;z-index:2;
+}
+.ev-ribbon.avail{background:rgba(62,201,124,0.18);color:var(--green);border:1px solid rgba(62,201,124,0.35)}
+.ev-ribbon.low{background:rgba(192,160,76,0.18);color:var(--gold);border:1px solid rgba(201,168,76,0.35)}
+.ev-ribbon.out{background:rgba(192,90,74,0.18);color:#e07060;border:1px solid rgba(192,90,74,0.3)}
+.ev-card-body{padding:14px 16px 16px;display:flex;flex-direction:column;flex:1;gap:0}
+.ev-venue-tag{font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.ev-name{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:4px}
+.ev-tagline{font-size:12px;color:var(--muted);font-style:italic;line-height:1.4;margin-bottom:8px}
+.ev-date{font-size:11.5px;color:var(--ink2);display:flex;align-items:center;gap:5px;margin-bottom:12px}
 .ev-date::before{content:'';display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0}
-.ev-price{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--gold2);margin-bottom:14px}
-.ev-avail{font-size:11px;color:var(--muted);font-style:italic;min-height:16px;margin-bottom:8px}
-.ev-btn{width:100%;padding:14px;border-radius:var(--r);border:none;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0e0d0b;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:auto}
-.ev-btn:hover{filter:brightness(1.07);transform:translateY(-1px)}
-.ev-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;filter:none}
+.ev-footer{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+.ev-price-block{}
+.ev-price{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gold2);line-height:1}
+.ev-price-label{font-size:10px;color:var(--muted);margin-top:1px}
+.ev-btn{
+  padding:10px 18px;border-radius:var(--r);border:none;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#0e0d0b;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+}
+.ev-btn:hover{filter:brightness(1.08)}
+.ev-btn:disabled{opacity:0.3;cursor:not-allowed;filter:none}
+.ev-btn.out-btn{
+  background:transparent;border:1px solid var(--border2);color:var(--muted);cursor:default;
+}
+.ev-card.soldout{opacity:0.6}
 
-/* EVENT VIEW */
+/* empty state */
+.empty-state{
+  grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);
+}
+.empty-state p{font-size:15px;margin-top:8px}
+
+/* ── EVENT VIEW ─────────────────────────────────────────── */
 #view-event{display:none}
-.back-btn{display:flex;align-items:center;justify-content:center;gap:8px;max-width:520px;margin:16px auto 4px;padding:12px 20px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.25);border-radius:var(--r);color:var(--gold);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s}
-.back-btn:hover{background:rgba(201,168,76,0.12);color:var(--gold2)}
-.header{padding:32px 24px 24px;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
-.header::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(201,168,76,0.06) 0%,transparent 100%);pointer-events:none}
-.header-inner{max-width:520px;margin:0 auto;position:relative;text-align:center}
-.event-name{font-family:'Playfair Display',serif;font-size:clamp(24px,6vw,40px);font-weight:700;line-height:1.1;margin-bottom:10px}
-.event-name em{font-style:italic;color:var(--gold2)}
-.header-meta{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
-.header-date{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
-.header-date::before{content:'';display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:0.6}
-.preventa-badge{display:inline-flex;align-items:center;gap:6px;background:var(--gold-dim);border:1px solid rgba(201,168,76,0.35);border-radius:999px;padding:3px 12px;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold)}
 
-/* PROGRESS */
-.progress-dots{display:flex;align-items:center;justify-content:center;gap:8px;padding:16px 24px 0}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--border2);transition:all 0.3s}
-.dot.active{background:var(--gold);width:24px;border-radius:4px}
+.back-bar{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 20px;border-bottom:1px solid var(--border2);
+}
+.back-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 14px;border-radius:var(--r);
+  border:1px solid var(--border2);background:transparent;
+  color:var(--gold);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .15s;
+}
+.back-btn:hover{background:rgba(201,168,76,0.08);border-color:rgba(201,168,76,0.3)}
+
+/* event hero (detail view) */
+.ev-detail-hero{
+  position:relative;height:clamp(200px,36vw,320px);overflow:hidden;
+  display:flex;
+}
+.ev-detail-half{flex:1;background-size:cover;background-position:center}
+.ev-detail-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(0deg, var(--bg) 0%, rgba(14,13,11,0.3) 70%, transparent 100%);
+}
+
+/* buy panel */
+.buy-panel{max-width:520px;margin:0 auto;padding:0 20px 120px}
+.buy-title{font-family:'Playfair Display',serif;font-size:clamp(22px,5vw,34px);font-weight:700;line-height:1.1;margin:20px 0 6px}
+.buy-title em{color:var(--gold2);font-style:italic}
+.buy-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.buy-meta-item{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.buy-meta-dot{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.5;flex-shrink:0}
+.buy-divider{height:1px;background:var(--border2);margin:18px 0}
+
+/* progress */
+.progress-dots{display:flex;align-items:center;gap:6px;margin-bottom:20px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--border2);transition:all 0.25s}
+.dot.active{background:var(--gold);width:22px;border-radius:3px}
 .dot.done{background:var(--green)}
 
-/* STEPS */
-.step{display:none;max-width:520px;margin:0 auto;padding:24px 20px 0}
+/* steps */
+.step{display:none}
 .step.active{display:block}
-.step-title{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;margin-bottom:4px}
-.step-sub{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.5}
+.step-title{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;margin-bottom:4px}
+.step-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5}
 
-/* FORM */
-.field-group{margin-bottom:13px}
-.field-label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:var(--muted);margin-bottom:6px}
-.field-input{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:12px 14px;color:var(--ink);font-family:'Inter',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;-webkit-appearance:none}
+/* form */
+.field-group{margin-bottom:12px}
+.field-label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:5px}
+.field-input{
+  width:100%;background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--r);padding:12px 14px;
+  color:var(--ink);font-family:'Inter',sans-serif;font-size:15px;
+  outline:none;transition:border-color 0.2s;-webkit-appearance:none;
+}
 .field-input:focus{border-color:var(--gold)}
 .field-input::placeholder{color:var(--muted)}
 .field-input.err{border-color:var(--danger)}
-.field-error{font-size:12px;color:var(--danger);margin-top:4px;display:none;font-style:italic}
+.field-error{font-size:11.5px;color:var(--danger);margin-top:3px;display:none;font-style:italic}
 .field-error.show{display:block}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tel-prefix{
+  display:flex;align-items:stretch;
+}
+.tel-prefix-code{
+  background:var(--surface2);border:1px solid var(--border2);border-right:none;
+  border-radius:var(--r) 0 0 var(--r);padding:12px 12px;
+  font-size:14px;color:var(--gold);font-weight:600;white-space:nowrap;
+  display:flex;align-items:center;
+}
+.tel-prefix .field-input{border-radius:0 var(--r) var(--r) 0;border-left:none}
+.hint-text{font-size:11px;color:var(--muted);margin-top:3px;min-height:14px;font-style:italic;transition:color .15s}
 
-/* TICKET BOX */
-.ticket-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);padding:18px;margin-bottom:20px}
-.ticket-box-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:14px}
-.counter-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.counter-label{font-size:15px;color:var(--ink2);font-weight:500}
-.counter-price{font-size:12px;color:var(--muted);margin-top:2px}
-.counter-ctrl{display:flex;align-items:center;gap:16px}
-.cnt-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--ink);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;user-select:none;-webkit-tap-highlight-color:transparent}
+/* ticket box */
+.ticket-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rlg);padding:16px;margin-bottom:18px;
+}
+.ticket-box-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:12px}
+.counter-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.counter-name{font-size:14px;color:var(--ink2);font-weight:500}
+.counter-unit-price{font-size:11px;color:var(--muted);margin-top:2px}
+.counter-ctrl{display:flex;align-items:center;gap:14px}
+.cnt-btn{
+  width:36px;height:36px;border-radius:50%;
+  border:1px solid var(--border2);background:var(--surface2);
+  color:var(--ink);font-size:20px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;user-select:none;-webkit-tap-highlight-color:transparent;
+}
 .cnt-btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold)}
-.cnt-btn:disabled{opacity:0.2;cursor:not-allowed}
-.cnt-num{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--gold);min-width:36px;text-align:center;line-height:1}
-.total-row{display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid var(--border2)}
-.total-label{font-size:14px;color:var(--ink2);font-weight:600}
-.total-value{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold2);letter-spacing:-0.02em}
+.cnt-btn:disabled{opacity:.2;cursor:not-allowed}
+.cnt-num{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--gold);min-width:32px;text-align:center;line-height:1}
+.total-row{display:flex;align-items:baseline;justify-content:space-between;padding-top:12px;border-top:1px solid var(--border2)}
+.total-label{font-size:13px;color:var(--ink2);font-weight:600}
+.total-value{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--gold2);letter-spacing:-0.02em}
 
-/* BUTTONS */
-.btn-primary{width:100%;padding:16px;border-radius:var(--r);border:none;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0e0d0b;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.02em;transition:all 0.2s;-webkit-tap-highlight-color:transparent}
+/* payment summary */
+.pay-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rlg);padding:18px;margin-bottom:14px;
+}
+.pay-card-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:10px}
+.pay-buyer{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;margin-bottom:2px}
+.pay-detail-txt{font-size:12.5px;color:var(--muted)}
+.pay-total-amount{font-family:'Playfair Display',serif;font-size:40px;font-weight:700;color:var(--gold2);letter-spacing:-0.03em;line-height:1;margin:10px 0 2px}
+.pay-total-sub{font-size:11px;color:var(--muted)}
+.desglose{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--r);padding:12px 14px;margin-bottom:14px;
+}
+.desglose-row{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0}
+.desglose-row.total{
+  border-top:1px solid var(--border2);margin-top:6px;padding-top:8px;
+  font-weight:600;color:var(--gold2);
+}
+
+/* sold out state */
+.sold-out-state{
+  text-align:center;padding:40px 20px;
+}
+.so-icon{font-size:32px;margin-bottom:12px}
+.so-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;margin-bottom:8px}
+.so-title em{color:var(--gold)}
+.so-divider{width:40px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:14px auto}
+.so-body{font-size:13px;color:var(--muted);line-height:1.7}
+
+/* thanks */
+.thanks-wrap{text-align:center;padding:36px 0 24px}
+.thanks-orn{font-size:12px;color:var(--gold);letter-spacing:0.3em;margin-bottom:16px;opacity:.9}
+.thanks-title{font-family:'Playfair Display',serif;font-size:34px;font-weight:700;margin-bottom:8px}
+.thanks-divider{width:50px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:12px auto}
+.thanks-body{font-size:14px;color:var(--ink2);line-height:1.7;margin-bottom:4px}
+.thanks-code{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--gold2);letter-spacing:4px;margin:16px 0}
+.thanks-note{font-size:11.5px;color:var(--muted);line-height:1.6}
+
+/* ── STICKY BOTTOM CTA (mobile buy flow) ───────────────── */
+.sticky-cta{
+  position:fixed;bottom:0;left:0;right:0;z-index:60;
+  padding:12px 20px env(safe-area-inset-bottom,12px);
+  background:linear-gradient(0deg,rgba(14,13,11,0.98) 70%,transparent);
+  backdrop-filter:blur(8px);
+}
+.sticky-cta-inner{max-width:520px;margin:0 auto}
+.btn-primary{
+  width:100%;padding:15px;border-radius:var(--r);border:none;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#0e0d0b;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;
+  cursor:pointer;letter-spacing:0.02em;transition:all .2s;
+  -webkit-tap-highlight-color:transparent;
+}
 .btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
 .btn-primary:active{transform:scale(0.98)}
-.btn-primary:disabled{opacity:0.25;cursor:not-allowed;transform:none}
-.btn-secondary{width:100%;margin-top:10px;padding:12px;background:transparent;border:1px solid var(--border2);border-radius:var(--r);color:var(--muted);font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all 0.15s}
-.btn-secondary:hover{background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,0.4);color:var(--gold2)}
+.btn-primary:disabled{opacity:.25;cursor:not-allowed;transform:none;filter:none}
+.btn-secondary{
+  width:100%;margin-top:8px;padding:11px;
+  background:transparent;border:1px solid var(--border2);
+  border-radius:var(--r);color:var(--muted);
+  font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;
+}
+.btn-secondary:hover{background:rgba(201,168,76,0.08);border-color:rgba(201,168,76,0.3);color:var(--gold2)}
 
-/* PAYMENT */
-.pay-summary{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);padding:18px;margin-bottom:14px}
-.pay-summary-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px}
-.pay-name{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;margin-bottom:3px}
-.pay-detail{font-size:13px;color:var(--muted)}
-.pay-total{font-family:'Playfair Display',serif;font-size:44px;font-weight:700;color:var(--gold2);letter-spacing:-0.03em;margin:10px 0 2px;line-height:1}
-.pay-total-sub{font-size:12px;color:var(--muted)}
-.desglose-box{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:12px 14px;margin-bottom:14px}
-.desglose-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
-.desglose-row.total{border-top:1px solid var(--border2);margin-top:4px;padding-top:8px;font-weight:600;color:var(--gold2)}
-
-/* OVERLAY */
-.overlay{display:none;position:fixed;inset:0;background:rgba(14,13,11,0.9);backdrop-filter:blur(6px);align-items:center;justify-content:center;z-index:100;flex-direction:column;gap:16px}
+/* ── OVERLAY ────────────────────────────────────────────── */
+.overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(14,13,11,0.9);backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;z-index:100;
+  flex-direction:column;gap:14px;
+}
 .overlay.show{display:flex}
-.spinner{width:32px;height:32px;border:2px solid rgba(201,168,76,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite}
+.spinner{
+  width:30px;height:30px;border-radius:50%;
+  border:2px solid rgba(201,168,76,0.2);border-top-color:var(--gold);
+  animation:spin 0.8s linear infinite;
+}
 .overlay p{font-size:13px;color:var(--muted)}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* SOLD OUT */
-.sold-out{display:none;max-width:520px;margin:0 auto;padding:40px 20px;text-align:center}
-.sold-out.active{display:block}
-.so-title{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;margin-bottom:10px}
-.so-title em{color:var(--gold)}
-.so-divider{width:40px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:16px auto}
-.so-body{font-size:14px;color:var(--muted);line-height:1.7}
-
-/* THANKS */
-.thanks-wrap{text-align:center;padding:32px 0 20px}
-.thanks-ornament{font-size:13px;color:var(--gold);letter-spacing:0.3em;margin-bottom:18px;opacity:0.9}
-.thanks h2{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;margin-bottom:10px}
-.thanks-divider{width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:14px auto}
-.thanks p{font-size:14px;color:var(--ink2);line-height:1.7;margin-bottom:5px}
-.thanks-code{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--gold2);letter-spacing:4px;margin:16px 0}
-
-@media(max-width:480px){.row2{grid-template-columns:1fr}}
+/* ── RESPONSIVE ─────────────────────────────────────────── */
+@media(max-width:480px){
+  .row2{grid-template-columns:1fr}
+  .events-grid{grid-template-columns:1fr;gap:12px;padding:0 14px 120px}
+  .hero-feature{height:clamp(280px,85vw,400px)}
+  .buy-panel{padding:0 16px 140px}
+}
+@media(prefers-reduced-motion:reduce){
+  .ev-card{transition:none}
+  .ev-card-img-half{transition:none}
+}
 </style>
 </head>
 <body>
 
+<!-- OVERLAY -->
 <div class="overlay" id="overlay">
   <div class="spinner"></div>
   <p id="overlay-msg">Procesando…</p>
 </div>
 
-<!-- CATALOG -->
+<!-- ══════════ CATALOG ══════════ -->
 <div id="view-catalog">
-  <header class="cat-header">
-    <div class="venue-eyebrow" style="margin-bottom:16px">
-      <div class="venue-line"></div>
-      <span class="venue-name">Areco · Próximos Eventos</span>
-      <div class="venue-line"></div>
+
+  <!-- sticky nav -->
+  <nav class="nav">
+    <div class="nav-brand">DataManIAcs <span>Entradas</span></div>
+    <div class="nav-city">San Antonio de Areco</div>
+  </nav>
+
+  <!-- hero featured event -->
+  <div class="hero-feature" id="heroFeature" style="display:none">
+    <div class="hero-feature-bg" id="heroBg"></div>
+    <div class="hero-feature-overlay"></div>
+    <div class="hero-feature-content">
+      <div class="hero-badge" id="heroBadge">🎸 Próximo evento</div>
+      <h1 class="hero-title" id="heroTitle"></h1>
+      <div class="hero-meta" id="heroMeta"></div>
+      <div class="hero-actions" id="heroActions"></div>
     </div>
-    <h1 class="cat-title">Entradas Online</h1>
-    <p class="cat-tagline">¿Qué estás esperando? No dejes que te arruinen el finde con planes aburridos.</p>
-    <div class="powered">
-      <span>Powered by</span>
-      <span style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--gold)">DataManIAcs</span>
-    </div>
-  </header>
-  <div class="events-grid" id="events-grid">
-    <div style="text-align:center;color:var(--muted);padding:40px;grid-column:1/-1">Cargando eventos…</div>
   </div>
+
+  <!-- filter bar -->
+  <div class="filter-wrap">
+    <div class="filter-scroll" id="filterRow">
+      <button class="filter-pill active" data-filter="all">Todos</button>
+      <!-- venue pills injected by JS -->
+    </div>
+  </div>
+
+  <!-- section heading -->
+  <div class="section-head">
+    <span class="section-title">Eventos</span>
+    <span class="section-count" id="evCount"></span>
+  </div>
+
+  <!-- grid -->
+  <div class="events-grid" id="events-grid">
+    <div class="empty-state"><div style="font-size:24px">🎵</div><p>Cargando eventos…</p></div>
+  </div>
+
 </div>
 
-<!-- EVENT VIEW -->
+<!-- ══════════ EVENT / BUY VIEW ══════════ -->
 <div id="view-event">
-  <button class="back-btn" onclick="showCatalog()">← Todos los eventos</button>
 
-  <header class="header">
-    <div class="header-inner">
-      <div class="venue-eyebrow">
-        <div class="venue-line"></div>
-        <span class="venue-name" id="hVenueName">El Chamico</span>
-        <div class="venue-line"></div>
-      </div>
-      <h1 class="event-name" id="hEventName"><em>Nombre</em></h1>
-      <div class="header-meta">
-        <span class="header-date" id="hEventDate">Fecha</span>
-        <span class="preventa-badge">🎟 Preventa</span>
-      </div>
-    </div>
-  </header>
-
-  <div class="progress-dots" id="progressDots">
-    <div class="dot active" id="d1"></div>
-    <div class="dot" id="d2"></div>
-    <div class="dot" id="d3"></div>
+  <!-- back bar -->
+  <div class="back-bar">
+    <button class="back-btn" onclick="showCatalog()">← Todos los eventos</button>
   </div>
 
-  <div class="sold-out" id="soldOut">
-    <div class="so-title">Preventa <em>agotada</em></div>
-    <div class="so-divider"></div>
-    <p class="so-body">Las entradas de preventa ya fueron reservadas.<br>Habrá entradas en puerta el día del evento.</p>
+  <!-- event hero images -->
+  <div class="ev-detail-hero">
+    <div class="ev-detail-half" id="detailImgA"></div>
+    <div class="ev-detail-half" id="detailImgB"></div>
+    <div class="ev-detail-overlay"></div>
   </div>
 
-  <!-- STEP 1 -->
-  <div class="step active" id="step1">
-    <div class="step-title">Tus datos</div>
-    <p class="step-sub">Completá el formulario y te mostramos cómo pagar.</p>
+  <!-- buy panel -->
+  <div class="buy-panel">
+    <h1 class="buy-title" id="buyTitle"></h1>
+    <div class="buy-meta" id="buyMeta"></div>
 
-    <div class="row2">
-      <div class="field-group">
-        <label class="field-label" for="f-nombre">Nombre *</label>
-        <input type="text" class="field-input" id="f-nombre" placeholder="Juan" autocomplete="given-name">
-        <div class="field-error" id="e-nombre">Ingresá tu nombre</div>
-      </div>
-      <div class="field-group">
-        <label class="field-label" for="f-apellido">Apellido *</label>
-        <input type="text" class="field-input" id="f-apellido" placeholder="García" autocomplete="family-name">
-        <div class="field-error" id="e-apellido">Ingresá tu apellido</div>
-      </div>
+    <!-- sold out -->
+    <div class="sold-out-state" id="soldOut" style="display:none">
+      <div class="so-icon">🎫</div>
+      <div class="so-title">Preventa <em>agotada</em></div>
+      <div class="so-divider"></div>
+      <p class="so-body">Las entradas de preventa ya fueron reservadas.<br>Habrá entradas en puerta el día del evento.</p>
     </div>
 
-    <div class="field-group">
-      <label class="field-label" for="f-email">Email *</label>
-      <input type="email" class="field-input" id="f-email" placeholder="tu@email.com" autocomplete="email" inputmode="email">
-      <div class="field-error" id="e-email">Ingresá un email válido</div>
-    </div>
+    <!-- buy flow -->
+    <div id="buyFlow" style="display:none">
+      <div class="progress-dots">
+        <div class="dot active" id="d1"></div>
+        <div class="dot" id="d2"></div>
+        <div class="dot" id="d3"></div>
+      </div>
 
-    <div class="row2">
-      <div class="field-group">
-        <label class="field-label" for="f-tel">Teléfono *</label>
-        <div style="display:flex;align-items:stretch">
-          <span style="background:var(--surface2);border:1px solid var(--border2);border-right:none;border-radius:var(--r) 0 0 var(--r);padding:12px 14px;font-size:15px;color:var(--gold);white-space:nowrap;font-weight:600;display:flex;align-items:center">+549</span>
-          <input type="tel" class="field-input" id="f-tel" placeholder="11 1234 5678" inputmode="numeric" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'');telFeedback()" style="border-radius:0 var(--r) var(--r) 0;border-left:none;flex:1">
+      <!-- STEP 1 — datos + cantidad -->
+      <div class="step active" id="step1">
+        <div class="step-title">Tus datos</div>
+        <p class="step-sub">Completá el formulario para continuar.</p>
+
+        <div class="row2">
+          <div class="field-group">
+            <label class="field-label" for="f-nombre">Nombre *</label>
+            <input type="text" class="field-input" id="f-nombre" placeholder="Juan" autocomplete="given-name">
+            <div class="field-error" id="e-nombre">Ingresá tu nombre</div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="f-apellido">Apellido *</label>
+            <input type="text" class="field-input" id="f-apellido" placeholder="García" autocomplete="family-name">
+            <div class="field-error" id="e-apellido">Ingresá tu apellido</div>
+          </div>
         </div>
-        <div id="tel-feedback" style="font-size:11px;color:var(--muted);margin-top:4px;min-height:15px;font-style:italic"></div>
-        <div class="field-error" id="e-tel">Ingresá 10 dígitos</div>
-      </div>
-      <div class="field-group">
-        <label class="field-label" for="f-dni">DNI *</label>
-        <input type="text" class="field-input" id="f-dni" placeholder="12345678" inputmode="numeric" maxlength="8" oninput="this.value=this.value.replace(/[^0-9]/g,'');dniFeedback()">
-        <div id="dni-feedback" style="font-size:11px;color:var(--muted);margin-top:4px;min-height:15px;font-style:italic"></div>
-        <div class="field-error" id="e-dni">DNI inválido (7 u 8 dígitos)</div>
-      </div>
-    </div>
 
-    <div class="ticket-box">
-      <div class="ticket-box-title">Entradas preventa</div>
-      <div class="counter-row">
-        <div>
-          <div class="counter-label" id="tierName">Entrada general</div>
-          <div class="counter-price" id="unitPriceText">$0 por persona</div>
+        <div class="field-group">
+          <label class="field-label" for="f-email">Email *</label>
+          <input type="email" class="field-input" id="f-email" placeholder="tu@email.com" autocomplete="email" inputmode="email">
+          <div class="field-error" id="e-email">Ingresá un email válido</div>
         </div>
-        <div class="counter-ctrl">
-          <button class="cnt-btn" id="btnMinus" onclick="changeQty(-1)" disabled>−</button>
-          <div class="cnt-num" id="qtyNum">1</div>
-          <button class="cnt-btn" id="btnPlus" onclick="changeQty(1)">+</button>
+
+        <div class="row2">
+          <div class="field-group">
+            <label class="field-label" for="f-tel">Teléfono *</label>
+            <div class="tel-prefix">
+              <span class="tel-prefix-code">+549</span>
+              <input type="tel" class="field-input" id="f-tel" placeholder="11 1234 5678"
+                inputmode="numeric" maxlength="10"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'');telFeedback()">
+            </div>
+            <div class="hint-text" id="tel-hint"></div>
+            <div class="field-error" id="e-tel">Ingresá 10 dígitos</div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="f-dni">DNI *</label>
+            <input type="text" class="field-input" id="f-dni" placeholder="12345678"
+              inputmode="numeric" maxlength="8"
+              oninput="this.value=this.value.replace(/[^0-9]/g,'');dniFeedback()">
+            <div class="hint-text" id="dni-hint"></div>
+            <div class="field-error" id="e-dni">DNI inválido (7 u 8 dígitos)</div>
+          </div>
+        </div>
+
+        <div class="buy-divider"></div>
+
+        <div class="ticket-box">
+          <div class="ticket-box-label">Entradas preventa</div>
+          <div class="counter-row">
+            <div>
+              <div class="counter-name" id="tierName">Entrada general</div>
+              <div class="counter-unit-price" id="unitPriceText"></div>
+            </div>
+            <div class="counter-ctrl">
+              <button class="cnt-btn" id="btnMinus" onclick="changeQty(-1)" disabled>−</button>
+              <div class="cnt-num" id="qtyNum">1</div>
+              <button class="cnt-btn" id="btnPlus" onclick="changeQty(1)">+</button>
+            </div>
+          </div>
+          <div class="total-row">
+            <span class="total-label">Total entradas</span>
+            <span class="total-value" id="totalVal"></span>
+          </div>
         </div>
       </div>
-      <div class="total-row">
-        <span class="total-label">Total entradas</span>
-        <span class="total-value" id="totalVal">$0</span>
+
+      <!-- STEP 2 — resumen -->
+      <div class="step" id="step2">
+        <div class="step-title">Resumen y pago</div>
+        <p class="step-sub">Revisá los datos antes de pagar.</p>
+        <div class="pay-card">
+          <div class="pay-card-label">Tu compra</div>
+          <div class="pay-buyer" id="s-nombre"></div>
+          <div class="pay-detail-txt" id="s-detalle"></div>
+          <div class="pay-total-amount" id="s-total"></div>
+          <div class="pay-total-sub">Total a pagar</div>
+        </div>
+        <div class="desglose">
+          <div class="desglose-row"><span style="color:var(--muted)">Entradas</span><span id="ds-entradas"></span></div>
+          <div class="desglose-row"><span style="color:var(--muted)">Cargo por servicio</span><span id="ds-servicio"></span></div>
+          <div class="desglose-row total"><span>Total</span><span id="ds-total"></span></div>
+        </div>
       </div>
-    </div>
 
-    <button class="btn-primary" onclick="goStep2()">Continuar →</button>
-  </div>
-
-  <!-- STEP 2 -->
-  <div class="step" id="step2">
-    <div class="step-title">Resumen y pago</div>
-    <p class="step-sub">Revisá los datos antes de pagar.</p>
-
-    <div class="pay-summary">
-      <div class="pay-summary-lbl">Tu compra</div>
-      <div class="pay-name" id="s-nombre"></div>
-      <div class="pay-detail" id="s-detalle"></div>
-      <div class="pay-total" id="s-total"></div>
-      <div class="pay-total-sub">Total a pagar</div>
-    </div>
-
-    <div class="desglose-box">
-      <div class="desglose-row">
-        <span style="color:var(--muted)">Entradas</span>
-        <span id="ds-entradas"></span>
-      </div>
-      <div class="desglose-row">
-        <span style="color:var(--muted)">Cargo por servicio (5%)</span>
-        <span id="ds-servicio"></span>
-      </div>
-      <div class="desglose-row total">
-        <span>Total</span>
-        <span id="ds-total"></span>
-      </div>
-    </div>
-
-    <button class="btn-primary" id="btnPagar" onclick="pagar()">Pagar con Mercado Pago →</button>
-    <button class="btn-secondary" onclick="goStep1()">← Volver</button>
-  </div>
-
-  <!-- STEP 3 -->
-  <div class="step" id="step3">
-    <div class="thanks-wrap">
-      <div class="thanks-ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
-      <div class="thanks">
-        <h2>¡Gracias!</h2>
-        <div class="thanks-divider"></div>
-        <p>Tu pago fue procesado correctamente.</p>
-        <p>Tu código de entrada:</p>
-        <div class="thanks-code" id="thanksCode"></div>
-        <p style="margin-top:8px;font-size:12px;color:var(--muted)">Te enviamos la confirmación por email.<br>Guardá este código — te lo van a pedir en la puerta.</p>
+      <!-- STEP 3 — gracias -->
+      <div class="step" id="step3">
+        <div class="thanks-wrap">
+          <div class="thanks-orn">✦ &nbsp; ✦ &nbsp; ✦</div>
+          <div class="thanks-title">¡Gracias!</div>
+          <div class="thanks-divider"></div>
+          <p class="thanks-body">Tu pago fue procesado correctamente.</p>
+          <p class="thanks-body">Tu código de entrada:</p>
+          <div class="thanks-code" id="thanksCode"></div>
+          <p class="thanks-note">Te enviamos la confirmación por email.<br>Guardá este código — te lo van a pedir en la puerta.</p>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- sticky bottom CTA -->
+  <div class="sticky-cta" id="stickyCta" style="display:none">
+    <div class="sticky-cta-inner">
+      <button class="btn-primary" id="mainCta" onclick="handleCta()">Continuar →</button>
+      <button class="btn-secondary" id="secondaryCta" onclick="handleBack()" style="display:none">← Volver</button>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -318,50 +610,139 @@ let CFG = {};
 let qty = 1;
 let available = 0;
 let currentEvent = null;
+let currentStep = 1;
+let allEvents = [];
+let activeFilter = 'all';
 
 function ars(n){ return '$' + Math.round(n).toLocaleString('es-AR'); }
 
 // ── CATALOG ──────────────────────────────────────────────────
+
 async function loadCatalog() {
   try {
     const r = await fetch(BASE + '/api/events');
     const data = await r.json();
-    renderCatalog(data.eventos || []);
+    allEvents = data.eventos || [];
+    buildFilters(allEvents);
+    renderHero(allEvents);
+    renderGrid(allEvents);
   } catch(e) {
     document.getElementById('events-grid').innerHTML =
-      '<div style="text-align:center;color:var(--danger);padding:40px;grid-column:1/-1">Error cargando eventos. Recargá la página.</div>';
+      '<div class="empty-state"><div style="font-size:24px">⚠️</div><p>Error cargando eventos. Recargá la página.</p></div>';
   }
 }
 
-function renderCatalog(events) {
+function buildFilters(events) {
+  const venues = [...new Map(events.map(ev => [ev.venue.slug, ev.venue])).values()];
+  const row = document.getElementById('filterRow');
+  venues.forEach(v => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-pill';
+    btn.dataset.filter = v.slug;
+    btn.textContent = v.name;
+    btn.onclick = () => setFilter(v.slug);
+    row.appendChild(btn);
+  });
+  // "all" pill click
+  row.querySelector('[data-filter="all"]').onclick = () => setFilter('all');
+}
+
+function setFilter(slug) {
+  activeFilter = slug;
+  document.querySelectorAll('.filter-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.filter === slug);
+  });
+  const filtered = slug === 'all' ? allEvents : allEvents.filter(ev => ev.venue.slug === slug);
+  renderGrid(filtered);
+}
+
+function renderHero(events) {
+  const next = events.find(ev => !ev.agotado) || events[0];
+  if (!next) return;
+  const imgs = next.image_urls || [];
+  const hero = document.getElementById('heroFeature');
+  const bg = document.getElementById('heroBg');
+  // use first image as hero bg, blended split
+  if (imgs[0]) {
+    bg.style.backgroundImage = `url('${imgs[0]}'), url('${imgs[1] || imgs[0]}')`;
+    bg.style.backgroundSize = '50% 100%, 50% 100%';
+    bg.style.backgroundPosition = 'left center, right center';
+    bg.style.backgroundRepeat = 'no-repeat, no-repeat';
+  }
+  document.getElementById('heroTitle').innerHTML = `<em>${next.name}</em>`;
+  document.getElementById('heroBadge').textContent = `🎟 ${next.venue.name}`;
+
+  const meta = document.getElementById('heroMeta');
+  meta.innerHTML = `
+    <span class="hero-meta-item">📅 ${formatDate(next.starts_at)}</span>
+    <span class="hero-meta-item">📍 ${next.venue.city}</span>
+  `;
+
+  const price = next.desde_cents / 100;
+  const total = Math.round(price * 1.05);
+  const actions = document.getElementById('heroActions');
+  actions.innerHTML = `
+    <div class="hero-price-tag">
+      <span class="hero-price-label">Preventa desde</span>
+      <span class="hero-price-val">${ars(price)}</span>
+      <span class="hero-price-sub">Total con cargo: ${ars(total)}</span>
+    </div>
+    <button class="hero-cta" onclick="selectEvent('${encodeURIComponent(JSON.stringify(next))}')">Comprar entrada →</button>
+  `;
+  hero.style.display = '';
+}
+
+function renderGrid(events) {
   const grid = document.getElementById('events-grid');
+  const count = document.getElementById('evCount');
   if (!events.length) {
-    grid.innerHTML = '<div style="text-align:center;color:var(--muted);padding:40px;grid-column:1/-1">No hay eventos disponibles por el momento.</div>';
+    grid.innerHTML = '<div class="empty-state"><div style="font-size:24px">🎵</div><p>No hay eventos para este filtro.</p></div>';
+    count.textContent = '';
     return;
   }
-
+  const available_count = events.filter(e => !e.agotado).length;
+  count.textContent = `${available_count} con entradas disponibles`;
   grid.innerHTML = events.map(ev => {
-    const imgs    = ev.image_urls || [];
-    const imgA    = imgs[0] || '';
-    const imgB    = imgs[1] || imgA;
-    const price   = ev.desde_cents / 100;
+    const imgs = ev.image_urls || [];
+    const imgA = imgs[0] || '';
+    const imgB = imgs[1] || imgA;
+    const price = ev.desde_cents / 100;
+    const totalPrice = Math.round(price * 1.05);
     const soldOut = ev.agotado;
-    const avail   = ev.available;
+    const avail = ev.available;
+    const isLow = !soldOut && avail !== null && avail <= 10;
+
+    let ribbonHtml = '';
+    if (soldOut) ribbonHtml = '<span class="ev-ribbon out">Agotado</span>';
+    else if (isLow) ribbonHtml = `<span class="ev-ribbon low">⚡ Últimos ${avail}</span>`;
+    else ribbonHtml = '<span class="ev-ribbon avail">✓ Disponible</span>';
+
+    const clickAttr = soldOut ? '' : `onclick="selectEvent('${encodeURIComponent(JSON.stringify(ev))}')"`;
 
     return `
-      <div class="ev-card" onclick="${soldOut ? '' : 'selectEvent(\'' + encodeURIComponent(JSON.stringify(ev)) + '\')'}">
+      <div class="ev-card${soldOut ? ' soldout' : ''}" ${clickAttr}>
         <div class="ev-card-img">
+          ${ribbonHtml}
           <div class="ev-card-img-half" style="background-image:url('${imgA}')"></div>
+          <div class="ev-card-img-divider"></div>
           <div class="ev-card-img-half" style="background-image:url('${imgB}')"></div>
+          <div class="ev-card-img-fade"></div>
         </div>
         <div class="ev-card-body">
-          <div class="ev-venue">${ev.venue.name} · ${ev.venue.city}</div>
+          <div class="ev-venue-tag">${ev.venue.name} · ${ev.venue.city}</div>
           <div class="ev-name">${ev.name}</div>
-          ${ev.tagline ? '<div class="ev-tagline">' + ev.tagline + '</div>' : ''}
+          ${ev.tagline ? `<div class="ev-tagline">${ev.tagline}</div>` : ''}
           <div class="ev-date">${formatDate(ev.starts_at)}</div>
-          <div class="ev-price">${ars(price)} <span style="font-size:13px;color:var(--muted);font-family:'Inter',sans-serif;font-weight:400">preventa</span></div>
-          <div class="ev-avail">${soldOut ? '🔴 Agotado' : avail !== null ? avail + ' lugares disponibles' : ''}</div>
-          <button class="ev-btn" ${soldOut ? 'disabled' : ''}>${soldOut ? 'Agotado' : 'Comprar entrada'}</button>
+          <div class="ev-footer">
+            <div class="ev-price-block">
+              <div class="ev-price">${ars(totalPrice)}</div>
+              <div class="ev-price-label">precio total (c/ cargo)</div>
+            </div>
+            ${soldOut
+              ? '<button class="ev-btn out-btn" disabled>Agotado</button>'
+              : `<button class="ev-btn" onclick="event.stopPropagation();selectEvent('${encodeURIComponent(JSON.stringify(ev))}')">Comprar</button>`
+            }
+          </div>
         </div>
       </div>
     `;
@@ -371,62 +752,80 @@ function renderCatalog(events) {
 function formatDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
-  const dias   = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-  const meses  = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  return dias[d.getDay()] + ' ' + d.getDate() + ' de ' + meses[d.getMonth()] + ' · ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + 'hs';
+  const dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return `${dias[d.getDay()]} ${d.getDate()} de ${meses[d.getMonth()]} · ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}hs`;
 }
+
+// ── EVENT SELECT ──────────────────────────────────────────────
 
 function selectEvent(encoded) {
   const ev = JSON.parse(decodeURIComponent(encoded));
   currentEvent = ev;
   CFG = {
-    event_id:       ev.id,
+    event_id: ev.id,
     ticket_type_id: ev.ticket_type_id,
-    tier_name:      ev.tier_name,
-    price_cents:    ev.desde_cents,
-    max_per_order:  ev.max_per_order || 10,
-    available:      ev.available,
+    tier_name: ev.tier_name,
+    price_cents: ev.desde_cents,
+    max_per_order: ev.max_per_order || 10,
+    available: ev.available,
   };
-
-  document.getElementById('hVenueName').textContent  = ev.venue.name;
-  document.getElementById('hEventName').innerHTML    = '<em>' + ev.name + '</em>';
-  document.getElementById('hEventDate').textContent  = formatDate(ev.starts_at);
-  document.getElementById('tierName').textContent    = ev.tier_name || 'Entrada general';
-
-  qty       = 1;
   available = ev.available !== null ? ev.available : 9999;
 
-  document.getElementById('view-catalog').style.display = 'none';
-  document.getElementById('view-event').style.display   = 'block';
+  // set detail hero images
+  const imgs = ev.image_urls || [];
+  const imgA = imgs[0] || '';
+  const imgB = imgs[1] || imgA;
+  document.getElementById('detailImgA').style.backgroundImage = `url('${imgA}')`;
+  document.getElementById('detailImgB').style.backgroundImage = `url('${imgB}')`;
 
-  if (available <= 0) {
-    document.getElementById('soldOut').classList.add('active');
-    document.getElementById('progressDots').style.display = 'none';
-    document.getElementById('step1').classList.remove('active');
-  } else {
-    document.getElementById('soldOut').classList.remove('active');
-    document.getElementById('progressDots').style.display = '';
-    setStep(1);
-    updateCounter();
-  }
+  // title + meta
+  document.getElementById('buyTitle').innerHTML = `<em>${ev.name}</em>`;
+  const meta = document.getElementById('buyMeta');
+  meta.innerHTML = `
+    <span class="buy-meta-item"><span class="buy-meta-dot"></span>${ev.venue.name}</span>
+    <span class="buy-meta-item"><span class="buy-meta-dot"></span>${formatDate(ev.starts_at)}</span>
+  `;
+
+  // switch view
+  document.getElementById('view-catalog').style.display = 'none';
+  document.getElementById('view-event').style.display = 'block';
   window.scrollTo({top:0,behavior:'smooth'});
+
+  if (ev.agotado || available <= 0) {
+    document.getElementById('soldOut').style.display = '';
+    document.getElementById('buyFlow').style.display = 'none';
+    document.getElementById('stickyCta').style.display = 'none';
+  } else {
+    document.getElementById('soldOut').style.display = 'none';
+    document.getElementById('buyFlow').style.display = '';
+    document.getElementById('stickyCta').style.display = '';
+    qty = 1;
+    currentStep = 1;
+    resetForm();
+    updateCounter();
+    setStep(1);
+  }
 }
 
 function showCatalog() {
-  document.getElementById('view-catalog').style.display = 'block';
-  document.getElementById('view-event').style.display   = 'none';
+  document.getElementById('view-catalog').style.display = '';
+  document.getElementById('view-event').style.display = 'none';
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
 // ── COUNTER ───────────────────────────────────────────────────
+
 function updateCounter() {
   const maxBuy = Math.min(available, CFG.max_per_order || 10);
   if (qty > maxBuy) qty = maxBuy;
-  document.getElementById('qtyNum').textContent       = qty;
+  document.getElementById('qtyNum').textContent = qty;
   document.getElementById('unitPriceText').textContent = ars(CFG.price_cents / 100) + ' por persona';
-  document.getElementById('totalVal').textContent     = ars(qty * CFG.price_cents / 100);
-  document.getElementById('btnMinus').disabled        = qty <= 1;
-  document.getElementById('btnPlus').disabled         = qty >= maxBuy;
+  document.getElementById('totalVal').textContent = ars(qty * CFG.price_cents / 100);
+  document.getElementById('btnMinus').disabled = qty <= 1;
+  document.getElementById('btnPlus').disabled = qty >= maxBuy;
+  if (document.getElementById('tierName'))
+    document.getElementById('tierName').textContent = CFG.tier_name || 'Entrada general';
 }
 
 function changeQty(d) {
@@ -436,34 +835,32 @@ function changeQty(d) {
 }
 
 // ── VALIDATION ────────────────────────────────────────────────
+
 function telFeedback() {
-  const v  = document.getElementById('f-tel').value;
-  const fb = document.getElementById('tel-feedback');
+  const v = document.getElementById('f-tel').value;
+  const fb = document.getElementById('tel-hint');
   if (!v.length) { fb.textContent=''; return; }
   if (v.length < 10) { fb.style.color='var(--danger)'; fb.textContent=v.length+'/10 dígitos'; }
   else { fb.style.color='var(--green)'; fb.textContent='✓ Listo'; }
 }
-
 function dniFeedback() {
-  const v  = document.getElementById('f-dni').value;
-  const fb = document.getElementById('dni-feedback');
+  const v = document.getElementById('f-dni').value;
+  const fb = document.getElementById('dni-hint');
   if (!v.length) { fb.textContent=''; return; }
   if (v.length < 7) { fb.style.color='var(--danger)'; fb.textContent=v.length+'/7 dígitos mínimo'; }
   else { fb.style.color='var(--green)'; fb.textContent='✓ Listo'; }
 }
-
 function dniOk(v) {
   const d = String(v||'').replace(/\D/g,'');
   return (d.length===7||d.length===8) && !/^(\d)\1+$/.test(d);
 }
-
 function validate() {
   const rules = [
-    {id:'f-nombre',   err:'e-nombre',   ok: v => v.trim().length > 1},
+    {id:'f-nombre', err:'e-nombre', ok: v => v.trim().length > 1},
     {id:'f-apellido', err:'e-apellido', ok: v => v.trim().length > 1},
-    {id:'f-email',    err:'e-email',    ok: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)},
-    {id:'f-tel',      err:'e-tel',      ok: v => v.replace(/[^0-9]/g,'').length === 10},
-    {id:'f-dni',      err:'e-dni',      ok: v => dniOk(v)},
+    {id:'f-email', err:'e-email', ok: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)},
+    {id:'f-tel', err:'e-tel', ok: v => v.replace(/[^0-9]/g,'').length === 10},
+    {id:'f-dni', err:'e-dni', ok: v => dniOk(v)},
   ];
   let valid = true;
   rules.forEach(r => {
@@ -475,56 +872,92 @@ function validate() {
   });
   return valid;
 }
+function resetForm() {
+  ['f-nombre','f-apellido','f-email','f-tel','f-dni'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.value=''; el.classList.remove('err'); }
+  });
+  ['e-nombre','e-apellido','e-email','e-tel','e-dni'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  });
+  ['tel-hint','dni-hint'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=''; });
+}
 
 // ── STEPS ─────────────────────────────────────────────────────
+
 function setStep(n) {
+  currentStep = n;
   ['step1','step2','step3'].forEach((id,i) =>
     document.getElementById(id).classList.toggle('active', i+1===n));
   ['d1','d2','d3'].forEach((id,i) => {
     const el = document.getElementById(id);
     el.classList.remove('active','done');
     if (i+1===n) el.classList.add('active');
-    if (i+1<n)   el.classList.add('done');
+    if (i+1<n) el.classList.add('done');
   });
+  updateStickyBtn(n);
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function goStep1() { setStep(1); }
+function updateStickyBtn(n) {
+  const mainBtn = document.getElementById('mainCta');
+  const secBtn = document.getElementById('secondaryCta');
+  if (n === 1) {
+    mainBtn.textContent = 'Continuar →';
+    mainBtn.disabled = false;
+    secBtn.style.display = 'none';
+  } else if (n === 2) {
+    mainBtn.textContent = 'Pagar con Mercado Pago →';
+    mainBtn.disabled = false;
+    secBtn.style.display = '';
+    secBtn.textContent = '← Volver';
+  } else {
+    document.getElementById('stickyCta').style.display = 'none';
+  }
+}
 
-function goStep2() {
-  if (!validate()) { window.scrollTo({top:0,behavior:'smooth'}); return; }
-  const subtotal = qty * CFG.price_cents / 100;
-  const servicio = Math.round(subtotal * 0.05);
-  const total    = subtotal + servicio;
+function handleCta() {
+  if (currentStep === 1) {
+    if (!validate()) { window.scrollTo({top:0,behavior:'smooth'}); return; }
+    const subtotal = qty * CFG.price_cents / 100;
+    const servicio = Math.round(subtotal * 0.05);
+    const total = subtotal + servicio;
+    document.getElementById('s-nombre').textContent =
+      document.getElementById('f-nombre').value.trim() + ' ' +
+      document.getElementById('f-apellido').value.trim();
+    document.getElementById('s-detalle').textContent =
+      qty + ' entrada' + (qty>1?'s':'') + ' preventa · DNI ' + document.getElementById('f-dni').value;
+    document.getElementById('s-total').textContent = ars(total);
+    document.getElementById('ds-entradas').textContent = ars(subtotal);
+    document.getElementById('ds-servicio').textContent = ars(servicio);
+    document.getElementById('ds-total').textContent = ars(total);
+    setStep(2);
+  } else if (currentStep === 2) {
+    pagar();
+  }
+}
 
-  document.getElementById('s-nombre').textContent   = document.getElementById('f-nombre').value.trim() + ' ' + document.getElementById('f-apellido').value.trim();
-  document.getElementById('s-detalle').textContent  = qty + ' entrada' + (qty>1?'s':'') + ' preventa · DNI ' + document.getElementById('f-dni').value;
-  document.getElementById('s-total').textContent    = ars(total);
-  document.getElementById('ds-entradas').textContent = ars(subtotal);
-  document.getElementById('ds-servicio').textContent = ars(servicio);
-  document.getElementById('ds-total').textContent    = ars(total);
-  setStep(2);
+function handleBack() {
+  if (currentStep === 2) setStep(1);
 }
 
 // ── PAGAR ─────────────────────────────────────────────────────
+
 async function pagar() {
-  const btn = document.getElementById('btnPagar');
-  btn.disabled = true;
+  const mainBtn = document.getElementById('mainCta');
+  mainBtn.disabled = true;
   document.getElementById('overlay-msg').textContent = 'Creando tu orden…';
   document.getElementById('overlay').classList.add('show');
-
   try {
     const r = await fetch(BASE + '/api/create-order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        event_id:       CFG.event_id,
+        event_id: CFG.event_id,
         payment_method: 'mp_checkout',
-        items: [{
-          ticket_type_id: CFG.ticket_type_id,
-          quantity:       qty,
-        }],
-        buyer: {
+        items:[{ ticket_type_id: CFG.ticket_type_id, quantity: qty }],
+        buyer:{
           first_name: document.getElementById('f-nombre').value.trim(),
           last_name:  document.getElementById('f-apellido').value.trim(),
           email:      document.getElementById('f-email').value.trim(),
@@ -533,39 +966,40 @@ async function pagar() {
         },
       }),
     });
-
     const data = await r.json();
     document.getElementById('overlay').classList.remove('show');
-
-    if (!r.ok) {
-      alert('Error: ' + (data.error || 'No se pudo crear la orden'));
-      btn.disabled = false;
-      return;
-    }
-
-    if (data.init_point) {
-      window.location.href = data.init_point;
-    }
-
+    if (!r.ok) { alert('Error: ' + (data.error||'No se pudo crear la orden')); mainBtn.disabled=false; return; }
+    if (data.init_point) window.location.href = data.init_point;
   } catch(e) {
     document.getElementById('overlay').classList.remove('show');
     alert('Error de conexión. Intentá de nuevo.');
-    btn.disabled = false;
+    document.getElementById('mainCta').disabled = false;
   }
 }
 
-// ── GRACIAS ───────────────────────────────────────────────────
+// ── RETURN / GRACIAS ──────────────────────────────────────────
+
 function checkReturn() {
   const params = new URLSearchParams(window.location.search);
-  const code   = params.get('code');
-  if (code) {
-    document.getElementById('view-catalog').style.display = 'none';
-    document.getElementById('view-event').style.display   = 'block';
-    document.getElementById('thanksCode').textContent     = code;
-    document.getElementById('progressDots').style.display = 'none';
-    ['step1','step2'].forEach(id => document.getElementById(id).classList.remove('active'));
-    document.getElementById('step3').classList.add('active');
-  }
+  const code = params.get('code');
+  if (!code) return;
+  document.getElementById('view-catalog').style.display = 'none';
+  document.getElementById('view-event').style.display = 'block';
+  document.getElementById('detailImgA').style.background = 'var(--surface)';
+  document.getElementById('detailImgB').style.background = 'var(--surface)';
+  document.getElementById('buyTitle').innerHTML = '';
+  document.getElementById('buyMeta').innerHTML = '';
+  document.getElementById('soldOut').style.display = 'none';
+  document.getElementById('buyFlow').style.display = '';
+  document.getElementById('stickyCta').style.display = 'none';
+  document.getElementById('thanksCode').textContent = code;
+  // hide steps 1 & 2, show step 3
+  document.getElementById('step1').classList.remove('active');
+  document.getElementById('step2').classList.remove('active');
+  document.getElementById('step3').classList.add('active');
+  document.querySelectorAll('.dot').forEach((el,i) => {
+    el.classList.remove('active'); el.classList.add('done');
+  });
 }
 
 // ── INIT ──────────────────────────────────────────────────────
