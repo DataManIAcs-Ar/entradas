@@ -1,0 +1,32 @@
+// api/mp-oauth-url.js
+// Generates the Mercado Pago OAuth authorization URL.
+// Called by the eventos page wizard step 5.
+// Returns { url } — frontend redirects the venue there.
+
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'method' });
+
+  const clientId   = process.env.MP_CLIENT_ID;
+  const baseUrl    = process.env.PUBLIC_BASE_URL;
+
+  if (!clientId || !baseUrl) {
+    return res.status(500).json({ error: 'MP_CLIENT_ID or PUBLIC_BASE_URL not set' });
+  }
+
+  // state carries the session ID so the callback knows which venue to update
+  const state = req.query.state || '';
+
+  const redirectUri = encodeURIComponent(baseUrl.replace(/\/+$/, '') + '/mp-connect');
+
+  const url = `https://auth.mercadopago.com.ar/authorization` +
+    `?client_id=${clientId}` +
+    `&response_type=code` +
+    `&platform_id=mp` +
+    `&redirect_uri=${redirectUri}` +
+    `&state=${encodeURIComponent(state)}`;
+
+  return res.status(200).json({ url });
+};
