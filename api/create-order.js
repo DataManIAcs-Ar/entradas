@@ -110,7 +110,7 @@ module.exports = async function handler(req, res) {
       // cargo al comprador, total, arancel de MP y nuestra comisión.
       // La app no calcula plata: una sola fórmula, en la base.
       const f = (await c.query(
-        `select * from calc_fees($1::bigint, $2::uuid)`, [subtotal, event_id])).rows[0];
+        `select * from calc_fees($1::bigint, $2::text)`, [subtotal, event_id])).rows[0];
 
       if (f.guarantee_met === false) {
         console.warn('[fees] garantía no alcanzada', { event_id: event_id, subtotal: subtotal });
