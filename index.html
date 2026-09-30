@@ -296,6 +296,18 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
 }
 .tel-prefix .field-input{border-radius:0 var(--r) var(--r) 0;border-left:none}
 .hint-text{font-size:11px;color:var(--muted);margin-top:3px;min-height:14px;font-style:italic;transition:color .15s}
+.notif-box{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--r);padding:14px 16px;margin-top:4px;
+}
+.notif-box-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px}
+.notif-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.notif-row:last-child{margin-bottom:0}
+.notif-check{
+  width:18px;height:18px;flex-shrink:0;margin-top:1px;
+  accent-color:var(--gold);cursor:pointer;
+}
+.notif-text{font-size:12.5px;color:var(--ink2);line-height:1.4;cursor:pointer}
 
 /* ticket box */
 .ticket-box{
@@ -567,6 +579,23 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
             <span class="total-value" id="totalVal"></span>
           </div>
         </div>
+
+        <!-- notification opt-ins -->
+        <div class="notif-box">
+          <div class="notif-box-label">Notificaciones (opcional)</div>
+          <div class="notif-row">
+            <input type="checkbox" class="notif-check" id="notif-venue">
+            <label class="notif-text" for="notif-venue" id="notif-venue-label">
+              Quiero recibir novedades de próximos eventos en este venue
+            </label>
+          </div>
+          <div class="notif-row">
+            <input type="checkbox" class="notif-check" id="notif-artist">
+            <label class="notif-text" for="notif-artist" id="notif-artist-label">
+              Quiero recibir novedades de próximos eventos de este artista
+            </label>
+          </div>
+        </div>
       </div>
 
       <!-- STEP 2 — resumen -->
@@ -836,6 +865,11 @@ function selectEvent(encoded) {
     resetForm();
     updateCounter();
     setStep(1);
+    // inject venue and artist names into notification labels
+    document.getElementById('notif-venue-label').textContent =
+      'Quiero recibir novedades de próximos eventos en ' + (ev.venue.name || 'este venue');
+    document.getElementById('notif-artist-label').textContent =
+      'Quiero recibir novedades de próximos eventos de ' + (ev.name || 'este artista');
   }
 }
 
@@ -913,6 +947,7 @@ function resetForm() {
     if (el) el.classList.remove('show');
   });
   ['tel-hint','dni-hint'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=''; });
+  ['notif-venue','notif-artist'].forEach(id => { const el=document.getElementById(id); if(el) el.checked=false; });
 }
 
 // ── STEPS ─────────────────────────────────────────────────────
@@ -995,6 +1030,8 @@ async function pagar() {
           phone:      document.getElementById('f-tel').value.trim(),
           dni:        document.getElementById('f-dni').value.trim(),
         },
+        notif_venue:  document.getElementById('notif-venue').checked,
+        notif_artist: document.getElementById('notif-artist').checked,
       }),
     });
     const data = await r.json();
