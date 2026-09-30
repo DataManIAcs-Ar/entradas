@@ -1008,6 +1008,20 @@ function handleBack() {
   if (currentStep === 2) setStep(1);
 }
 
+// ── DEVICE DETECTION ──────────────────────────────────────────
+
+function detectDevice() {
+  const ua = navigator.userAgent;
+  if (/iPhone/i.test(ua))                          return 'iPhone';
+  if (/iPad/i.test(ua))                            return 'iPad';
+  if (/Android/i.test(ua) && /Mobile/i.test(ua))  return 'Android Phone';
+  if (/Android/i.test(ua))                         return 'Android Tablet';
+  if (/Mac/i.test(ua))                             return 'Mac';
+  if (/Windows/i.test(ua))                         return 'Windows PC';
+  if (/Linux/i.test(ua))                           return 'Linux';
+  return 'Desconocido';
+}
+
 // ── PAGAR ─────────────────────────────────────────────────────
 
 async function pagar() {
@@ -1032,6 +1046,7 @@ async function pagar() {
         },
         notif_venue:  document.getElementById('notif-venue').checked,
         notif_artist: document.getElementById('notif-artist').checked,
+        device:       detectDevice(),
       }),
     });
     const data = await r.json();
