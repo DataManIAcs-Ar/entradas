@@ -1,5 +1,5 @@
 // api/mp-oauth-url.js
-// Generates the Mercado Pago OAuth authorization URL
+// Generates the Mercado Pago OAuth authorization URL.
 // Called by the eventos page wizard step 5.
 // Returns { url } — frontend redirects the venue there.
 
