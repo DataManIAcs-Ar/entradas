@@ -1,4 +1,7 @@
 {
+  "routes": [
+    { "src": "/mp-connect", "dest": "/api/mp-oauth-callback" }
+  ],
   "headers": [
     {
       "source": "/assets/(.*)",
