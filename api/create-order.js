@@ -1,26 +1,4 @@
 // api/create-order.js
-//
-// Crea la orden, reserva el cupo y devuelve cómo pagar.
-//
-// DOS CAMINOS SEGÚN EL MÉTODO DE PAGO:
-//
-//   mp_checkout  → eventos grandes. Crea la preference de Mercado Pago
-//                  y devuelve el link de pago. Hold de 15 minutos.
-//
-//   transfer     → eventos chicos. No toca Mercado Pago: devuelve un
-//                  CÓDIGO y el alias. El comprador transfiere pegando
-//                  el código en el motivo, y después se concilia con
-//                  el extracto. Hold de 48 horas, porque una
-//                  transferencia manual no se hace en 15 minutos.
-//
-// ORDEN DE OPERACIONES (para mp_checkout):
-//   1. transacción: lock del tier → cupo → insert de la orden
-//   2. commit
-//   3. recién ahí, llamar a Mercado Pago
-//
-// Si el paso 3 falla, la orden queda pending y expira sola. El cupo
-// vuelve. Nadie pagó de más y nada quedó a medias.
-
 const { tx, query } = require('../lib/db');
 const { createPreference } = require('../lib/mp');
 
@@ -34,6 +12,10 @@ module.exports = async function handler(req, res) {
     const { event_id, items, buyer } = body;
 
     const method = body.payment_method === 'transfer' ? 'transfer' : 'mp_checkout';
+
+    // notification opt-ins (default false if not sent)
+    const notifVenue  = body.notif_venue  === true;
+    const notifArtist = body.notif_artist === true;
 
     if (!event_id || !Array.isArray(items) || !items.length) {
       return res.status(400).json({ error: 'faltan event_id o items' });
@@ -54,7 +36,7 @@ module.exports = async function handler(req, res) {
       if (ev.status !== 'on_sale') throw httpErr(409, 'evento no está a la venta');
       const accessToken = ev.mp_access_token || process.env.MP_ACCESS_TOKEN;
       if (method === 'mp_checkout' && !accessToken) {
-      throw httpErr(409, 'el venue no vinculó Mercado Pago');
+        throw httpErr(409, 'el venue no vinculó Mercado Pago');
       }
 
       let subtotal = 0;
@@ -64,10 +46,6 @@ module.exports = async function handler(req, res) {
         const qty = parseInt(it.quantity, 10);
         if (!(qty > 0)) throw httpErr(400, 'cantidad inválida');
 
-        // ── EL LOCK ────────────────────────────────────────────────
-        // Serializa a todos los que compran ESTE tier: el segundo
-        // espera al primero y lee el cupo ya actualizado. Sin esto se
-        // vende dos veces el mismo último lugar.
         const tt = (await c.query(
           `select id, name, price_cents, quantity, max_per_order,
                   sales_start_at, sales_end_at, status
@@ -83,8 +61,6 @@ module.exports = async function handler(req, res) {
         if (tt.sales_start_at && now < tt.sales_start_at) throw httpErr(409, tt.name + ' todavía no está a la venta');
         if (tt.sales_end_at   && now > tt.sales_end_at)   throw httpErr(409, tt.name + ' ya cerró');
 
-        // Cupo tomado = pagas + propuestas + pendientes vigentes.
-        // Las vencidas no cuentan: su lugar ya volvió al pool.
         if (tt.quantity !== null) {
           const taken = parseInt((await c.query(
             `select coalesce(sum(oi.quantity),0) as n
@@ -105,19 +81,13 @@ module.exports = async function handler(req, res) {
                      quantity: qty, unit_price_cents: tt.price_cents });
       }
 
-      // ── COMISIONES ────────────────────────────────────────────────
-      // calc_fees recibe el PRECIO DE CARA y devuelve las cuatro patas:
-      // cargo al comprador, total, arancel de MP y nuestra comisión.
-      // La app no calcula plata: una sola fórmula, en la base.
       const f = (await c.query(
         `select * from calc_fees($1::bigint, $2::text)`, [subtotal, event_id])).rows[0];
 
       if (f.guarantee_met === false) {
-        console.warn('[fees] garantía no alcanzada', { event_id: event_id, subtotal: subtotal });
+        console.warn('[fees] garantía no alcanzada', { event_id, subtotal });
       }
 
-      // El código va SIEMPRE, aunque pague por Mercado Pago: sirve de
-      // referencia para el comprador y para soporte.
       const code = (await c.query(
         `select 'ENT-' || short_code(nextval('order_code_seq')) as code`)).rows[0].code;
 
@@ -127,9 +97,10 @@ module.exports = async function handler(req, res) {
            buyer_first_name, buyer_last_name, buyer_email, buyer_phone, buyer_dni,
            subtotal_cents, service_fee_cents, total_cents,
            platform_fee_cents, mp_fee_estimated_cents, venue_net_cents,
-           pricing_model, status, hold_expires_at, channel
+           pricing_model, status, hold_expires_at, channel,
+           notif_venue, notif_artist
          ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,
-                   'pending', now() + $17::interval, $18)
+                   'pending', now() + $17::interval, $18, $19, $20)
          returning *`,
         [event_id, ev.venue_id, code, method,
          buyer.first_name, buyer.last_name, buyer.email,
@@ -137,7 +108,8 @@ module.exports = async function handler(req, res) {
          subtotal, f.service_fee_cents, f.total_cents,
          f.platform_fee_cents, f.mp_fee_estimated_cents, f.venue_net_cents,
          f.pricing_model, HOLD[method],
-         body.channel === 'door' ? 'door' : 'online'])).rows[0];
+         body.channel === 'door' ? 'door' : 'online',
+         notifVenue, notifArtist])).rows[0];
 
       for (const l of lines) {
         await c.query(
@@ -151,16 +123,12 @@ module.exports = async function handler(req, res) {
 
     const o = result.order;
 
-    // Desglose para la pantalla. En Argentina el precio final tiene que
-    // estar a la vista, y además un cargo que aparece recién al final es
-    // la forma más rápida de perder la venta.
     const desglose = {
       entradas: o.subtotal_cents    / 100,
       servicio: o.service_fee_cents / 100,
       total:    o.total_cents       / 100,
     };
 
-    // ── TRANSFERENCIA: no se toca Mercado Pago ────────────────────
     if (method === 'transfer') {
       return res.status(200).json({
         order_id:   o.id,
@@ -169,17 +137,11 @@ module.exports = async function handler(req, res) {
         alias:      process.env.TRANSFER_ALIAS || null,
         desglose:   desglose,
         expires_at: o.hold_expires_at,
-        // Esta instrucción es la que hace que la conciliación funcione:
-        // sin el código en el motivo, emparejar es adivinar.
         instrucciones: 'Transferí $' + desglose.total.toLocaleString('es-AR') +
                        ' y poné ' + o.code + ' en el motivo de la transferencia.',
       });
     }
 
-    // ── MERCADO PAGO: fuera de la transacción ─────────────────────
-    // Llamar a MP con la transacción abierta dejaría el lock del tier
-    // tomado durante toda la latencia de red. Con cientos de personas
-    // comprando a la vez, eso es una fila de espera.
     const pref = await createPreference({
       accessToken: result.event.mp_access_token || process.env.MP_ACCESS_TOKEN,
       order:   o,
