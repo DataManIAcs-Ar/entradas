@@ -3,6 +3,9 @@ const { tx, query } = require('../lib/db');
 const { getPayment } = require('../lib/mp');
 const crypto = require('crypto');
 
+const SHEET_ID  = '1Tmrr6lxD7n0wp3x87wUdy-vP-tuDGU8DCvMmIh9UciI';
+const SHEET_TAB = 'Tickets_Entradas';
+
 function validateSignature({ xSignature, xRequestId, dataId, secret }) {
   if (!xSignature || !secret) return false;
   try {
@@ -20,13 +23,72 @@ function validateSignature({ xSignature, xRequestId, dataId, secret }) {
   } catch (_) { return false; }
 }
 
+// ── Push one row to Google Sheets via Service Account ──────────
+async function pushToSheet(row) {
+  try {
+    const creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '{}');
+    if (!creds.client_email) {
+      console.warn('[webhook] GOOGLE_SERVICE_ACCOUNT_JSON not set — skipping sheet push');
+      return;
+    }
+
+    // Build JWT for Google OAuth2
+    const now   = Math.floor(Date.now() / 1000);
+    const claim = {
+      iss: creds.client_email,
+      scope: 'https://www.googleapis.com/auth/spreadsheets',
+      aud: 'https://oauth2.googleapis.com/token',
+      exp: now + 3600,
+      iat: now,
+    };
+
+    // Sign JWT with private key
+    const { SignJWT } = await import('jose');
+    const privateKey = await (await import('jose')).importPKCS8(creds.private_key, 'RS256');
+    const jwt = await new SignJWT(claim)
+      .setProtectedHeader({ alg: 'RS256' })
+      .sign(privateKey);
+
+    // Exchange JWT for access token
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+    });
+    const { access_token } = await tokenRes.json();
+
+    // Append row to sheet
+    const range = encodeURIComponent(`${SHEET_TAB}!A:U`);
+    const url   = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+
+    const appendRes = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ values: [row] }),
+    });
+
+    if (!appendRes.ok) {
+      const err = await appendRes.text();
+      console.error('[webhook] sheet append failed:', err);
+    } else {
+      console.log('[webhook] sheet row appended ✅');
+    }
+  } catch (err) {
+    // Never let a sheet error break the webhook response
+    console.error('[webhook] sheet push error:', err.message);
+  }
+}
+
 module.exports = async function handler(req, res) {
   try {
     const body   = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const q      = req.query || {};
     const dataId = q['data.id'] || q.id || body?.data?.id;
 
-    // 1. FIRMA
+    // 1. Validate signature
     const ok = validateSignature({
       xSignature: req.headers['x-signature'],
       xRequestId: req.headers['x-request-id'],
@@ -42,7 +104,7 @@ module.exports = async function handler(req, res) {
     if (topic !== 'payment') return res.status(200).json({ ignored: topic });
     if (!dataId)             return res.status(200).json({ ignored: 'sin data.id' });
 
-    // 2. ¿Ya procesamos este pago?
+    // 2. Already processed?
     const known = (await query(
       `select o.id, o.status, o.event_id, v.mp_access_token
          from "order" o join venue v on v.id = o.venue_id
@@ -52,7 +114,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true, already: true });
     }
 
-    // 3. Buscar el pago en los venues activos
+    // 3. Fetch payment from MP
     let payment = null;
     const venues = await query(
       `select id, mp_access_token from venue
@@ -65,7 +127,6 @@ module.exports = async function handler(req, res) {
       } catch (_) {}
     }
 
-    // Also try with platform token if no venue token worked
     if (!payment && process.env.MP_ACCESS_TOKEN) {
       try {
         const p = await getPayment({ accessToken: process.env.MP_ACCESS_TOKEN, paymentId: dataId });
@@ -81,7 +142,7 @@ module.exports = async function handler(req, res) {
     const orderId = payment.external_reference;
     if (!orderId) return res.status(200).json({ ok: true, no_ref: true });
 
-    // 4. Aplicar el pago
+    // 4. Apply payment
     const minted = await tx(async (c) => {
       const ord = (await c.query(
         `select * from "order" where id = $1 for update`, [orderId])).rows[0];
@@ -117,18 +178,20 @@ module.exports = async function handler(req, res) {
         [String(payment.id), payment.status, payment.status_detail || null,
          mpFeeActual, orderId]);
 
-      // Emitir entradas
+      // Issue tickets
       const secret = process.env.TICKET_SECRET;
       const lines  = (await c.query(
-        `select ticket_type_id, quantity from order_item where order_id = $1`,
-        [orderId])).rows;
+        `select oi.ticket_type_id, oi.quantity
+           from order_item oi where oi.order_id = $1`, [orderId])).rows;
 
       let n = 0;
+      let firstTicketCode = null;
       for (const l of lines) {
         for (let i = 0; i < l.quantity; i++) {
           const id  = crypto.randomUUID();
           const seq = (await c.query(`select nextval('ticket_code_seq') as n`)).rows[0].n;
           const code = 'ARC-' + Number(seq).toString(36).toUpperCase().padStart(4, '0');
+          if (!firstTicketCode) firstTicketCode = code;
           const sig  = crypto.createHmac('sha256', secret).update(id).digest('hex');
           await c.query(
             `insert into ticket (id, order_id, event_id, ticket_type_id, code, qr_token, status)
@@ -138,17 +201,65 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      // Encolar email en la MISMA transacción
+      // Queue confirmation email
       await c.query(
         `insert into email_outbox (order_id, to_email, template)
          values ($1, $2, 'confirmacion')`,
         [orderId, ord.buyer_email]);
 
-      return { minted: n };
+      // Fetch event + venue name for sheet
+      const evRow = (await c.query(
+        `select e.name as event_name, e.starts_at,
+                v.name as venue_name
+           from event e join venue v on v.id = e.venue_id
+          where e.id = $1`, [ord.event_id])).rows[0];
+
+      // Detect device from payment metadata (best effort)
+      const device = payment.additional_info?.payer?.authentication_type || 'online';
+
+      // Build sheet row — must match column order in Tickets_Entradas exactly
+      const paidAt   = new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+      const eventDate = evRow?.starts_at
+        ? new Date(evRow.starts_at).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })
+        : '';
+      const totalQty = lines.reduce((s, l) => s + l.quantity, 0);
+
+      const sheetRow = [
+        paidAt,                                          // Fecha y hora pago
+        ord.code,                                        // Código orden
+        firstTicketCode || '',                           // Código ticket
+        ord.buyer_first_name,                            // Nombre
+        ord.buyer_last_name,                             // Apellido
+        ord.buyer_email,                                 // Email
+        ord.buyer_phone || '',                           // Teléfono
+        ord.buyer_dni   || '',                           // DNI
+        totalQty,                                        // Cantidad
+        Number(ord.subtotal_cents)    / 100,             // Subtotal (ARS)
+        Number(ord.service_fee_cents) / 100,             // Cargo servicio (ARS)
+        Number(ord.total_cents)       / 100,             // Total (ARS)
+        Number(ord.venue_net_cents)   / 100,             // Venue recibe (ARS)
+        ord.payment_method,                              // Tipo pago
+        'Confirmado',                                    // Estado
+        evRow?.event_name || ord.event_id,               // Evento
+        eventDate,                                       // Fecha del evento
+        evRow?.venue_name || '',                         // Venue
+        ord.channel || 'online',                         // Canal
+        String(payment.id),                              // MP Payment ID
+        device,                                          // Dispositivo
+        ord.notif_venue  ? 'Yes' : 'No',                 // Notif. Venue
+        ord.notif_artist ? 'Yes' : 'No',                 // Notif. Artista
+      ];
+
+      return { minted: n, sheetRow, ord };
     });
 
-    console.log('[webhook] ok', { orderId, ...minted });
-    return res.status(200).json({ ok: true, ...minted });
+    // Push to sheet outside the transaction
+    if (minted.sheetRow) {
+      await pushToSheet(minted.sheetRow);
+    }
+
+    console.log('[webhook] ok', { orderId, minted: minted.minted });
+    return res.status(200).json({ ok: true, minted: minted.minted });
 
   } catch (err) {
     console.error('[webhook] error', err);
