@@ -157,7 +157,7 @@ module.exports = async function handler(req, res) {
         return { skipped: `estado ${payment.status}` };
       }
 
-      const paidCents = payment.amount_cents;
+      const paidCents = Math.round(Number(payment.transaction_amount) * 100);
       if (paidCents !== Number(ord.total_cents)) {
         console.error('[webhook] monto no coincide', { orderId, esperado: ord.total_cents, recibido: paidCents });
         return { skipped: 'monto no coincide' };
@@ -214,9 +214,6 @@ module.exports = async function handler(req, res) {
            from event e join venue v on v.id = e.venue_id
           where e.id = $1`, [ord.event_id])).rows[0];
 
-      // Detect device from payment metadata (best effort)
-      const device = payment.additional_info?.payer?.authentication_type || 'online';
-
       // Build sheet row — must match column order in Tickets_Entradas exactly
       const paidAt   = new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
       const eventDate = evRow?.starts_at
@@ -225,29 +222,29 @@ module.exports = async function handler(req, res) {
       const totalQty = lines.reduce((s, l) => s + l.quantity, 0);
 
       const sheetRow = [
-        paidAt,                                          // Fecha y hora pago
-        ord.code,                                        // Código orden
-        firstTicketCode || '',                           // Código ticket
-        ord.buyer_first_name,                            // Nombre
-        ord.buyer_last_name,                             // Apellido
-        ord.buyer_email,                                 // Email
-        (ord.buyer_phone ? '+549' + ord.buyer_phone : ''),  // Teléfono
-        ord.buyer_dni   || '',                           // DNI
-        totalQty,                                        // Cantidad
-        Number(ord.subtotal_cents)    / 100,             // Subtotal (ARS)
-        Number(ord.service_fee_cents) / 100,             // Cargo servicio (ARS)
-        Number(ord.total_cents)       / 100,             // Total (ARS)
-        Number(ord.venue_net_cents)   / 100,             // Venue recibe (ARS)
-        ord.payment_method,                              // Tipo pago
-        'Confirmado',                                    // Estado
-        evRow?.event_name || ord.event_id,               // Evento
-        eventDate,                                       // Fecha del evento
-        evRow?.venue_name || '',                         // Venue
-        ord.channel || 'online',                         // Canal
-        String(payment.id),                              // MP Payment ID
-        device,                                          // Dispositivo
-        ord.notif_venue  ? 'Yes' : 'No',                 // Notif. Venue
-        ord.notif_artist ? 'Yes' : 'No',                 // Notif. Artista
+        paidAt,                                                    // Fecha y hora pago
+        ord.code,                                                  // Código orden
+        firstTicketCode || '',                                     // Código ticket
+        ord.buyer_first_name,                                      // Nombre
+        ord.buyer_last_name,                                       // Apellido
+        ord.buyer_email,                                           // Email
+        (ord.buyer_phone ? '+549' + ord.buyer_phone : ''),         // Teléfono
+        ord.buyer_dni   || '',                                     // DNI
+        totalQty,                                                  // Cantidad
+        Number(ord.subtotal_cents)    / 100,                       // Subtotal (ARS)
+        Number(ord.service_fee_cents) / 100,                       // Cargo servicio (ARS)
+        Number(ord.total_cents)       / 100,                       // Total (ARS)
+        Number(ord.venue_net_cents)   / 100,                       // Venue recibe (ARS)
+        ord.payment_method,                                        // Tipo pago
+        'Confirmado',                                              // Estado
+        evRow?.event_name || ord.event_id,                         // Evento
+        eventDate,                                                 // Fecha del evento
+        evRow?.venue_name || '',                                   // Venue
+        ord.channel || 'online',                                   // Canal
+        String(payment.id),                                        // MP Payment ID
+        ord.device || '',                                          // Dispositivo
+        ord.notif_venue  ? 'Yes' : 'No',                           // Notif. Venue
+        ord.notif_artist ? 'Yes' : 'No',                           // Notif. Artista
       ];
 
       return { minted: n, sheetRow, ord };
