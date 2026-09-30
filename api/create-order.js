@@ -1,6 +1,6 @@
 // api/create-order.js
 //
-// Crea la orden, reserva el cupo y devuelve cómo pagar.
+// Crea la orden, reserva el cupo y devuelve cómo pagar
 //
 // DOS CAMINOS SEGÚN EL MÉTODO DE PAGO:
 //
