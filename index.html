@@ -161,17 +161,25 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
   border-color:rgba(201,168,76,0.22);
 }
 .ev-card-img{
-  height:190px;overflow:hidden;flex-shrink:0;
+  overflow:hidden;flex-shrink:0;
   display:flex;position:relative;
 }
-.ev-card-img-half{
+/* flyer mode — single image, portrait ratio */
+.ev-card-img.flyer{height:260px;}
+.ev-card-img.flyer .ev-card-img-half{
+  flex:1;background-size:cover;background-position:center top;
+  transition:transform .4s ease;
+}
+/* split mode — two images side by side */
+.ev-card-img.split{height:190px;}
+.ev-card-img.split .ev-card-img-half{
   flex:1;background-size:cover;background-position:center;
   transition:transform .4s ease;
 }
 .ev-card:hover .ev-card-img-half{transform:scale(1.04)}
 .ev-card-img-divider{width:1px;background:rgba(0,0,0,0.5);flex-shrink:0;z-index:1}
 .ev-card-img-fade{
-  position:absolute;bottom:0;left:0;right:0;height:60px;
+  position:absolute;bottom:0;left:0;right:0;height:80px;
   background:linear-gradient(transparent,var(--surface));
   pointer-events:none;
 }
@@ -664,10 +672,19 @@ function renderHero(events) {
   const bg = document.getElementById('heroBg');
   // use first image as hero bg, blended split
   if (imgs[0]) {
-    bg.style.backgroundImage = `url('${imgs[0]}'), url('${imgs[1] || imgs[0]}')`;
-    bg.style.backgroundSize = '50% 100%, 50% 100%';
-    bg.style.backgroundPosition = 'left center, right center';
-    bg.style.backgroundRepeat = 'no-repeat, no-repeat';
+    if (imgs.length >= 2) {
+      // two images — split layout
+      bg.style.backgroundImage = `url('${imgs[0]}'), url('${imgs[1]}')`;
+      bg.style.backgroundSize = '50% 100%, 50% 100%';
+      bg.style.backgroundPosition = 'left center, right center';
+      bg.style.backgroundRepeat = 'no-repeat, no-repeat';
+    } else {
+      // single flyer — full width centered
+      bg.style.backgroundImage = `url('${imgs[0]}')`;
+      bg.style.backgroundSize = 'cover';
+      bg.style.backgroundPosition = 'center top';
+      bg.style.backgroundRepeat = 'no-repeat';
+    }
   }
   document.getElementById('heroTitle').innerHTML = `<em>${next.name}</em>`;
   document.getElementById('heroBadge').textContent = `🎟 ${next.venue.name}`;
@@ -705,12 +722,13 @@ function renderGrid(events) {
   grid.innerHTML = events.map(ev => {
     const imgs = ev.image_urls || [];
     const imgA = imgs[0] || '';
-    const imgB = imgs[1] || imgA;
+    const imgB = imgs[1] || '';
     const price = ev.desde_cents / 100;
     const totalPrice = Math.round(price * 1.05);
     const soldOut = ev.agotado;
     const avail = ev.available;
     const isLow = !soldOut && avail !== null && avail <= 10;
+    const isFlyer = imgs.length <= 1; // single image = flyer mode
 
     let ribbonHtml = '';
     if (soldOut) ribbonHtml = '<span class="ev-ribbon out">Agotado</span>';
@@ -719,13 +737,17 @@ function renderGrid(events) {
 
     const clickAttr = soldOut ? '' : `onclick="selectEvent('${encodeURIComponent(JSON.stringify(ev))}')"`;
 
+    const imgHtml = isFlyer
+      ? `<div class="ev-card-img-half" style="background-image:url('${imgA}')"></div>`
+      : `<div class="ev-card-img-half" style="background-image:url('${imgA}')"></div>
+         <div class="ev-card-img-divider"></div>
+         <div class="ev-card-img-half" style="background-image:url('${imgB}')"></div>`;
+
     return `
       <div class="ev-card${soldOut ? ' soldout' : ''}" ${clickAttr}>
-        <div class="ev-card-img">
+        <div class="ev-card-img ${isFlyer ? 'flyer' : 'split'}">
           ${ribbonHtml}
-          <div class="ev-card-img-half" style="background-image:url('${imgA}')"></div>
-          <div class="ev-card-img-divider"></div>
-          <div class="ev-card-img-half" style="background-image:url('${imgB}')"></div>
+          ${imgHtml}
           <div class="ev-card-img-fade"></div>
         </div>
         <div class="ev-card-body">
@@ -775,9 +797,18 @@ function selectEvent(encoded) {
   // set detail hero images
   const imgs = ev.image_urls || [];
   const imgA = imgs[0] || '';
-  const imgB = imgs[1] || imgA;
-  document.getElementById('detailImgA').style.backgroundImage = `url('${imgA}')`;
-  document.getElementById('detailImgB').style.backgroundImage = `url('${imgB}')`;
+  const imgB = imgs[1] || '';
+  const detailA = document.getElementById('detailImgA');
+  const detailB = document.getElementById('detailImgB');
+  detailA.style.backgroundImage = `url('${imgA}')`;
+  if (imgB) {
+    detailB.style.backgroundImage = `url('${imgB}')`;
+    detailB.style.display = '';
+  } else {
+    // single flyer — hide second half, first fills full width
+    detailB.style.display = 'none';
+    detailA.style.backgroundPosition = 'center top';
+  }
 
   // title + meta
   document.getElementById('buyTitle').innerHTML = `<em>${ev.name}</em>`;
