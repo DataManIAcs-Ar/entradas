@@ -16,6 +16,7 @@ module.exports = async function handler(req, res) {
     // notification opt-ins (default false if not sent)
     const notifVenue  = body.notif_venue  === true;
     const notifArtist = body.notif_artist === true;
+    const device      = String(body.device || '').trim() || null;
 
     if (!event_id || !Array.isArray(items) || !items.length) {
       return res.status(400).json({ error: 'faltan event_id o items' });
@@ -98,9 +99,9 @@ module.exports = async function handler(req, res) {
            subtotal_cents, service_fee_cents, total_cents,
            platform_fee_cents, mp_fee_estimated_cents, venue_net_cents,
            pricing_model, status, hold_expires_at, channel,
-           notif_venue, notif_artist
+           notif_venue, notif_artist, device
          ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,
-                   'pending', now() + $17::interval, $18, $19, $20)
+                   'pending', now() + $17::interval, $18, $19, $20, $21)
          returning *`,
         [event_id, ev.venue_id, code, method,
          buyer.first_name, buyer.last_name, buyer.email,
@@ -109,7 +110,7 @@ module.exports = async function handler(req, res) {
          f.platform_fee_cents, f.mp_fee_estimated_cents, f.venue_net_cents,
          f.pricing_model, HOLD[method],
          body.channel === 'door' ? 'door' : 'online',
-         notifVenue, notifArtist])).rows[0];
+         notifVenue, notifArtist, device])).rows[0];
 
       for (const l of lines) {
         await c.query(
