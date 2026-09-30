@@ -231,7 +231,7 @@ module.exports = async function handler(req, res) {
         ord.buyer_first_name,                            // Nombre
         ord.buyer_last_name,                             // Apellido
         ord.buyer_email,                                 // Email
-        ord.buyer_phone || '',                           // Teléfono
+        (ord.buyer_phone ? '+549' + ord.buyer_phone : ''),  // Teléfono
         ord.buyer_dni   || '',                           // DNI
         totalQty,                                        // Cantidad
         Number(ord.subtotal_cents)    / 100,             // Subtotal (ARS)
