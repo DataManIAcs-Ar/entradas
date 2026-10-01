@@ -157,7 +157,7 @@ module.exports = async function handler(req, res) {
         return { skipped: `estado ${payment.status}` };
       }
 
-      const paidCents = Math.round(Number(payment.transaction_amount) * 100);
+      const paidCents = payment.amount_cents;
       if (paidCents !== Number(ord.total_cents)) {
         console.error('[webhook] monto no coincide', { orderId, esperado: ord.total_cents, recibido: paidCents });
         return { skipped: 'monto no coincide' };
