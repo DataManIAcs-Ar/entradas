@@ -152,7 +152,9 @@ function closePage({ ok, state, venueId, mpEmail, message }) {
     }, '*');
   } catch(e) {}
   // Close this popup after a short delay
-  setTimeout(() => { try { window.close(); } catch(e) {} }, 2000);
+  setTimeout(() => {
+  window.location.href = 'https://areco-eventos.vercel.app?mp_connected=true&mp_email=' + encodeURIComponent('${mpEmail}') + '&state=' + encodeURIComponent('${state || ''}');
+  }, 1500);
 </script>
 </body>
 </html>`;
