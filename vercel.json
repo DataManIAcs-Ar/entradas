@@ -1,6 +1,6 @@
 {
-  "routes": [
-    { "src": "/mp-connect", "dest": "/api/mp-oauth-callback" }
+  "rewrites": [
+    { "source": "/mp-connect", "destination": "/api/mp-oauth-callback" }
   ],
   "headers": [
     {
