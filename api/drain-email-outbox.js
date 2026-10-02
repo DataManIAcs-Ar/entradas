@@ -31,7 +31,7 @@ module.exports = async function handler(req, res) {
       JOIN "order"      o  ON o.id  = eo.order_id
       JOIN event        e  ON e.id  = o.event_id
       JOIN venue        v  ON v.id  = o.venue_id
-      LEFT JOIN ticket  t  ON t.order_id = o.id  LIMIT 1
+      LEFT JOIN ticket  t  ON t.order_id = o.id AND t.id = (SELECT id FROM ticket WHERE order_id = o.id LIMIT 1)
       LEFT JOIN ticket_type tt ON tt.id = t.ticket_type_id
       WHERE eo.status   = 'pending'
         AND eo.attempts < 3
