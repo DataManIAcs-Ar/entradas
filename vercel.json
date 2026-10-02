@@ -11,9 +11,6 @@
     }
   ],
   "crons": [
-    {
-      "path": "/api/drain-email-outbox",
-      "schedule": "0 9 * * *"
-    }
+   { "path": "/api/drain-email-outbox", "schedule": "*/30 * * * *" }
   ]
 }
