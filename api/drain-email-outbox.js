@@ -1,4 +1,4 @@
-// api/drain-email-outbox.js — v6
+// api/drain-email-outbox.js — v
 // Triggered by cron (every 30 min) or manually via GET/POST
 // Sends confirmation emails for paid orders via Resend
 
