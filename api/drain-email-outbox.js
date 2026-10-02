@@ -1,4 +1,4 @@
-// v5
+// v
 const { query } = require('../lib/db.js');
 const { Resend } = require('resend');
 
