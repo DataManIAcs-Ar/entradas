@@ -1,5 +1,5 @@
 # entradas
 
-Plataforma de venta de entradas · DataManIAc.
+Plataforma de venta de entradas · DataManIAc
 
 
